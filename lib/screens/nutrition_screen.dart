@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -15,10 +13,10 @@ class NutritionScreen extends StatefulWidget {
 
 class _NutritionScreenState extends State<NutritionScreen> {
   final TextEditingController _foodController = TextEditingController();
-  final TextEditingController _portionController =
-      TextEditingController(text: '100');
-  final TextEditingController _caloriesController =
-      TextEditingController();
+  final TextEditingController _portionController = TextEditingController(
+    text: '100',
+  );
+  final TextEditingController _caloriesController = TextEditingController();
 
   String _selectedMeal = 'Sarapan';
   List<Map<String, Object?>> _foods = [];
@@ -48,10 +46,10 @@ class _NutritionScreenState extends State<NutritionScreen> {
     }
 
     try {
-      final foods =
-          await NutritionService.instance.getTodayFoods(user.id);
-      final calories =
-          await NutritionService.instance.getTodayCalories(user.id);
+      final foods = await NutritionService.instance.getTodayFoods(user.id);
+      final calories = await NutritionService.instance.getTodayCalories(
+        user.id,
+      );
 
       if (!mounted) return;
 
@@ -125,9 +123,8 @@ class _NutritionScreenState extends State<NutritionScreen> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -220,10 +217,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
                         border: OutlineInputBorder(),
                       ),
                       items: _mealTypes.map((meal) {
-                        return DropdownMenuItem(
-                          value: meal,
-                          child: Text(meal),
-                        );
+                        return DropdownMenuItem(value: meal, child: Text(meal));
                       }).toList(),
                       onChanged: (value) {
                         if (value != null) {
@@ -313,14 +307,13 @@ class _NutritionScreenState extends State<NutritionScreen> {
                             (food['portion_grams'] as num?)?.toDouble() ?? 0;
                         final calories =
                             (food['calories'] as num?)?.toDouble() ?? 0;
-                        final time =
-                            food['consumed_at']?.toString() ?? '';
+                        final time = food['consumed_at']?.toString() ?? '';
 
                         final dateTime = DateTime.tryParse(time);
                         final timeLabel = dateTime == null
                             ? ''
                             : '${dateTime.hour.toString().padLeft(2, '0')}:'
-                                '${dateTime.minute.toString().padLeft(2, '0')}';
+                                  '${dateTime.minute.toString().padLeft(2, '0')}';
 
                         return Card(
                           margin: const EdgeInsets.only(bottom: 8),
@@ -329,9 +322,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
                               child: Icon(Icons.restaurant),
                             ),
                             title: Text(name),
-                            subtitle: Text(
-                              '$portion gram • $timeLabel',
-                            ),
+                            subtitle: Text('$portion gram • $timeLabel'),
                             trailing: Text(
                               '${calories.toStringAsFixed(0)} kkal',
                               style: const TextStyle(

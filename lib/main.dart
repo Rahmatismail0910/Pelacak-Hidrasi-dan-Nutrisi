@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -25,12 +24,8 @@ class HydrationNutritionApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-        ),
-        inputDecorationTheme: const InputDecorationTheme(
-          filled: true,
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        inputDecorationTheme: const InputDecorationTheme(filled: true),
       ),
       home: const LoginScreen(),
     );

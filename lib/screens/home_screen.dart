@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -31,18 +30,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final user = context.read<AuthProvider>().currentUser;
 
     if (user == null) {
-      return {
-        'total_water_ml': 0,
-        'target_water_ml': 0,
-        'total_calories': 0,
-      };
+      return {'total_water_ml': 0, 'target_water_ml': 0, 'total_calories': 0};
     }
 
-    final hydration =
-        await HydrationService.instance.getTodaySummary(user.id);
+    final hydration = await HydrationService.instance.getTodaySummary(user.id);
 
-    final calories =
-        await NutritionService.instance.getTodayCalories(user.id);
+    final calories = await NutritionService.instance.getTodayCalories(user.id);
 
     return {
       'total_water_ml': hydration['total_water_ml'] ?? 0,
@@ -64,9 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _showComingSoon(BuildContext context, String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Halaman $feature akan dibuat selanjutnya.'),
-      ),
+      SnackBar(content: Text('Halaman $feature akan dibuat selanjutnya.')),
     );
   }
 
@@ -77,9 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Konfirmasi Keluar'),
-          content: const Text(
-            'Apakah Anda yakin ingin keluar dari aplikasi?',
-          ),
+          content: const Text('Apakah Anda yakin ingin keluar dari aplikasi?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
@@ -102,9 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (_) => const LoginScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
       (route) => false,
     );
   }
@@ -113,9 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _openHydration() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const HydrationScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const HydrationScreen()),
     );
 
     if (!mounted) return;
@@ -127,9 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _openNutrition() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const NutritionScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const NutritionScreen()),
     );
 
     if (!mounted) return;
@@ -170,9 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Salam pengguna.
                 Text(
                   'Halo, $userName!',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineMedium
+                  style: Theme.of(context).textTheme.headlineMedium
                       ?.copyWith(fontWeight: FontWeight.bold),
                 ),
 
@@ -186,8 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   initialData: now,
                   builder: (context, snapshot) {
-                    final currentTime =
-                        snapshot.data ?? DateTime.now();
+                    final currentTime = snapshot.data ?? DateTime.now();
 
                     final date = MaterialLocalizations.of(context)
                         .formatFullDate(currentTime);
@@ -199,9 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     return Text(
                       '$date • $time',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                      ),
+                      style: TextStyle(color: Colors.grey.shade600),
                     );
                   },
                 ),
@@ -219,11 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.favorite,
-                        size: 36,
-                        color: Colors.blue,
-                      ),
+                      Icon(Icons.favorite, size: 36, color: Colors.blue),
                       SizedBox(height: 12),
                       Text(
                         'Mulai Hari Lebih Sehat',
@@ -245,10 +219,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 const Text(
                   'Ringkasan Hari Ini',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
 
                 const SizedBox(height: 14),
@@ -257,8 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 FutureBuilder<Map<String, Object?>>(
                   future: _summaryFuture,
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState ==
-                        ConnectionState.waiting) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(
                         child: Padding(
                           padding: EdgeInsets.all(20),
@@ -282,14 +252,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     final summary = snapshot.data ?? {};
 
                     final totalWater =
-                        (summary['total_water_ml'] as num?)
-                                ?.toInt() ??
-                            0;
+                        (summary['total_water_ml'] as num?)?.toInt() ?? 0;
 
                     final totalCalories =
-                        (summary['total_calories'] as num?)
-                                ?.toDouble() ??
-                            0;
+                        (summary['total_calories'] as num?)?.toDouble() ?? 0;
 
                     return Row(
                       children: [
@@ -306,8 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: _buildSummaryCard(
                             icon: Icons.local_fire_department,
                             title: 'Kalori',
-                            value:
-                                '${totalCalories.toStringAsFixed(0)} kkal',
+                            value: '${totalCalories.toStringAsFixed(0)} kkal',
                             color: Colors.green,
                           ),
                         ),
@@ -320,10 +285,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 const Text(
                   'Menu Utama',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
 
                 const SizedBox(height: 14),
@@ -332,8 +294,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _buildMenuCard(
                   icon: Icons.water_drop,
                   title: 'Hidrasi',
-                  subtitle:
-                      'Hitung kebutuhan air dan atur jadwal minum.',
+                  subtitle: 'Hitung kebutuhan air dan atur jadwal minum.',
                   color: Colors.blue,
                   onTap: _openHydration,
                 ),
@@ -342,8 +303,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _buildMenuCard(
                   icon: Icons.restaurant,
                   title: 'Nutrisi',
-                  subtitle:
-                      'Catat makanan dan hitung kalori harian.',
+                  subtitle: 'Catat makanan dan hitung kalori harian.',
                   color: Colors.green,
                   onTap: _openNutrition,
                 ),
@@ -352,39 +312,27 @@ class _HomeScreenState extends State<HomeScreen> {
                 _buildMenuCard(
                   icon: Icons.bar_chart,
                   title: 'Dashboard',
-                  subtitle:
-                      'Pantau grafik perkembangan harian dan mingguan.',
+                  subtitle: 'Pantau grafik perkembangan harian dan mingguan.',
                   color: Colors.purple,
-                  onTap: () => _showComingSoon(
-                    context,
-                    'Dashboard',
-                  ),
+                  onTap: () => _showComingSoon(context, 'Dashboard'),
                 ),
 
                 // Menu Notifikasi.
                 _buildMenuCard(
                   icon: Icons.notifications_active,
                   title: 'Notifikasi',
-                  subtitle:
-                      'Atur pengingat jadwal minum dan makan.',
+                  subtitle: 'Atur pengingat jadwal minum dan makan.',
                   color: Colors.orange,
-                  onTap: () => _showComingSoon(
-                    context,
-                    'Notifikasi',
-                  ),
+                  onTap: () => _showComingSoon(context, 'Notifikasi'),
                 ),
 
                 // Menu Profil.
                 _buildMenuCard(
                   icon: Icons.person,
                   title: 'Profil',
-                  subtitle:
-                      'Kelola nama, usia, tinggi, dan berat badan.',
+                  subtitle: 'Kelola nama, usia, tinggi, dan berat badan.',
                   color: Colors.teal,
-                  onTap: () => _showComingSoon(
-                    context,
-                    'Profil',
-                  ),
+                  onTap: () => _showComingSoon(context, 'Profil'),
                 ),
               ],
             ),
@@ -407,25 +355,13 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              icon,
-              color: color,
-              size: 30,
-            ),
+            Icon(icon, color: color, size: 30),
             const SizedBox(height: 12),
-            Text(
-              title,
-              style: TextStyle(
-                color: Colors.grey.shade700,
-              ),
-            ),
+            Text(title, style: TextStyle(color: Colors.grey.shade700)),
             const SizedBox(height: 6),
             Text(
               value,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -451,17 +387,9 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         leading: CircleAvatar(
           backgroundColor: color.withValues(alpha: 0.12),
-          child: Icon(
-            icon,
-            color: color,
-          ),
+          child: Icon(icon, color: color),
         ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.chevron_right),
         onTap: onTap,

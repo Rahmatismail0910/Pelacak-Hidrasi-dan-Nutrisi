@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -53,16 +52,13 @@ class _LoginScreenState extends State<LoginScreen> {
       if (success) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (_) => const HomeScreen(),
-          ),
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              authProvider.errorMessage ??
-                  'Email atau password tidak sesuai.',
+              authProvider.errorMessage ?? 'Email atau password tidak sesuai.',
             ),
             backgroundColor: Colors.red,
           ),
@@ -76,10 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Login gagal: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Login gagal: $e'), backgroundColor: Colors.red),
       );
     }
   }
@@ -87,9 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _openForgotPassword() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const ForgotPasswordScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
     );
   }
 

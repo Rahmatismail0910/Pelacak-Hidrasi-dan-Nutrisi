@@ -1,4 +1,3 @@
-
 import 'database_service.dart';
 
 class HydrationService {
@@ -54,13 +53,7 @@ class HydrationService {
                             + excluded.total_water_ml,
           updated_at = excluded.updated_at
         ''',
-        [
-          userId,
-          dateKey,
-          targetMl,
-          amountMl,
-          now.toIso8601String(),
-        ],
+        [userId, dateKey, targetMl, amountMl, now.toIso8601String()],
       );
     });
   }
@@ -76,13 +69,9 @@ class HydrationService {
     );
 
     if (results.isEmpty) {
-      return {
-        'target_water_ml': 0,
-        'total_water_ml': 0,
-      };
+      return {'target_water_ml': 0, 'total_water_ml': 0};
     }
 
     return results.first;
   }
 }
-

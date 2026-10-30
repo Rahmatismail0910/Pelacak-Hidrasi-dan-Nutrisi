@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -13,11 +12,13 @@ class HydrationScreen extends StatefulWidget {
 }
 
 class _HydrationScreenState extends State<HydrationScreen> {
-  final TextEditingController _targetController =
-      TextEditingController(text: '2000');
+  final TextEditingController _targetController = TextEditingController(
+    text: '2000',
+  );
 
-  final TextEditingController _amountController =
-      TextEditingController(text: '250');
+  final TextEditingController _amountController = TextEditingController(
+    text: '250',
+  );
 
   int _dailyTarget = 2000;
   int _totalDrunk = 0;
@@ -37,9 +38,8 @@ class _HydrationScreenState extends State<HydrationScreen> {
     {'time': '21:00', 'amount': 250, 'completed': false},
   ];
 
-  double get _progress => _dailyTarget > 0
-      ? (_totalDrunk / _dailyTarget).clamp(0.0, 1.0)
-      : 0;
+  double get _progress =>
+      _dailyTarget > 0 ? (_totalDrunk / _dailyTarget).clamp(0.0, 1.0) : 0;
 
   @override
   void initState() {
@@ -56,8 +56,7 @@ class _HydrationScreenState extends State<HydrationScreen> {
     }
 
     try {
-      final summary =
-          await HydrationService.instance.getTodaySummary(user.id);
+      final summary = await HydrationService.instance.getTodaySummary(user.id);
 
       if (!mounted) return;
 
@@ -176,9 +175,8 @@ class _HydrationScreenState extends State<HydrationScreen> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -336,16 +334,14 @@ class _HydrationScreenState extends State<HydrationScreen> {
                         margin: const EdgeInsets.only(bottom: 8),
                         child: CheckboxListTile(
                           value: item['completed'] as bool,
-                          onChanged: (value) =>
-                              _toggleSchedule(index, value),
+                          onChanged: (value) => _toggleSchedule(index, value),
                           secondary: const Icon(
                             Icons.water_drop,
                             color: Colors.blue,
                           ),
                           title: Text('${item['time']}'),
                           subtitle: Text('${item['amount']} ml air'),
-                          controlAffinity:
-                              ListTileControlAffinity.trailing,
+                          controlAffinity: ListTileControlAffinity.trailing,
                         ),
                       );
                     }),

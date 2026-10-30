@@ -1,4 +1,3 @@
-
 import 'database_service.dart';
 
 class NutritionService {
@@ -20,9 +19,7 @@ class NutritionService {
     required double calories,
     required String mealType,
   }) async {
-    if (foodName.trim().isEmpty ||
-        portionGrams <= 0 ||
-        calories < 0) {
+    if (foodName.trim().isEmpty || portionGrams <= 0 || calories < 0) {
       throw ArgumentError('Data makanan tidak valid.');
     }
 
