@@ -1,5 +1,5 @@
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
@@ -44,22 +44,105 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (!mounted) return;
 
-    if (success) {
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (_) => const HomeScreen(),
-        ),
-        (route) => false,
-      );
-    } else {
+    if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            auth.errorMessage ?? 'Registrasi gagal.',
-          ),
-        ),
+        SnackBar(content: Text(auth.errorMessage ?? 'Registrasi gagal.')),
       );
+      return;
     }
+
+    final recoveryCode = auth.recoveryCode;
+
+    if (recoveryCode == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Kode pemulihan tidak berhasil dibuat.')),
+      );
+      return;
+    }
+
+    await _showRecoveryCode(recoveryCode);
+
+    if (!mounted) return;
+
+    auth.clearRecoveryCode();
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      (route) => false,
+    );
+  }
+
+  Future<void> _showRecoveryCode(String code) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return PopScope(
+          canPop: false,
+          child: AlertDialog(
+            icon: const Icon(
+              Icons.verified_user_outlined,
+              color: Colors.green,
+              size: 48,
+            ),
+            title: const Text(
+              'Akun berhasil dibuat!',
+              textAlign: TextAlign.center,
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Simpan kode pemulihan berikut. '
+                  'Kode ini diperlukan jika kamu lupa password.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                SelectableText(
+                  code,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Clipboard.setData(ClipboardData(text: code));
+
+                    if (!dialogContext.mounted) return;
+
+                    ScaffoldMessenger.of(dialogContext).showSnackBar(
+                      const SnackBar(content: Text('Kode pemulihan disalin.')),
+                    );
+                  },
+                  icon: const Icon(Icons.copy),
+                  label: const Text('Salin kode'),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Jangan bagikan kode ini kepada orang lain. '
+                  'Kode lama tidak dapat ditampilkan kembali.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: Colors.red),
+                ),
+              ],
+            ),
+            actions: [
+              FilledButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                },
+                child: const Text('Saya sudah menyimpan'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -67,9 +150,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final auth = context.watch<AuthProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Buat Akun'),
-      ),
+      appBar: AppBar(title: const Text('Buat Akun')),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -129,9 +210,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           return 'Email wajib diisi.';
                         }
 
-                        if (!RegExp(
-                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                        ).hasMatch(email)) {
+                        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                            .hasMatch(email)) {
                           return 'Format email tidak valid.';
                         }
 
@@ -182,8 +262,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         suffixIcon: IconButton(
                           onPressed: () {
                             setState(() {
-                              _obscureConfirmation =
-                                  !_obscureConfirmation;
+                              _obscureConfirmation = !_obscureConfirmation;
                             });
                           },
                           icon: Icon(

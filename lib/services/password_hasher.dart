@@ -49,6 +49,18 @@ class PasswordHasher {
     }
   }
 
+  static String generateRecoveryCode() {
+    final random = Random.secure();
+    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+
+    final code = bytes
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join()
+        .toUpperCase();
+
+    return 'HYDR-$code';
+  }
+
   static bool constantTimeEquals(List<int> a, List<int> b) {
     if (a.length != b.length) return false;
 

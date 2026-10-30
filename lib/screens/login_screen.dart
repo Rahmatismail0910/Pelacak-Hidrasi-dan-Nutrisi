@@ -1,7 +1,11 @@
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../providers/auth_provider.dart';
 import 'home_screen.dart';
+import 'forgot_password_screen.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -32,20 +36,59 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
 
-    // Login sementara untuk menguji tampilan dan navigasi.
-    // Autentikasi database akan ditambahkan kemudian.
-    await Future.delayed(const Duration(milliseconds: 400));
+    final authProvider = context.read<AuthProvider>();
 
-    if (!mounted) return;
+    try {
+      final success = await authProvider.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
 
-    setState(() {
-      _isLoading = false;
-    });
+      if (!mounted) return;
 
-    Navigator.pushReplacement(
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (success) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const HomeScreen(),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              authProvider.errorMessage ??
+                  'Email atau password tidak sesuai.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Login gagal: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _openForgotPassword() {
+    Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => const HomeScreen(),
+        builder: (_) => const ForgotPasswordScreen(),
       ),
     );
   }
@@ -70,6 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Colors.blue,
                     ),
                     const SizedBox(height: 16),
+
                     const Text(
                       'Pelacak Hidrasi dan Nutrisi',
                       textAlign: TextAlign.center,
@@ -79,12 +123,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
+
                     Text(
                       'Pantau kebutuhan air dan asupan nutrisi harianmu.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                      ),
+                      style: TextStyle(color: Colors.grey.shade600),
                     ),
                     const SizedBox(height: 36),
 
@@ -113,9 +156,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           return 'Email wajib diisi';
                         }
 
-                        if (!RegExp(
-                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                        ).hasMatch(email)) {
+                        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                            .hasMatch(email)) {
                           return 'Format email tidak valid';
                         }
 
@@ -153,23 +195,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         return null;
                       },
                     ),
+
                     const SizedBox(height: 10),
 
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Fitur lupa password akan dibuat nanti.',
-                              ),
-                            ),
-                          );
-                        },
+                        onPressed: _openForgotPassword,
                         child: const Text('Lupa Password?'),
                       ),
                     ),
+
                     const SizedBox(height: 12),
 
                     SizedBox(
@@ -190,15 +226,15 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                       ),
                     ),
+
                     const SizedBox(height: 20),
 
                     TextButton(
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Fitur pendaftaran akan dibuat nanti.',
-                            ),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const RegisterScreen(),
                           ),
                         );
                       },
