@@ -1,9 +1,18 @@
-import 'package:flutter/material.dart';
 
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'providers/auth_provider.dart';
 import 'screens/login_screen.dart';
 
 void main() {
-  runApp(const HydrationNutritionApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => AuthProvider(),
+      child: const HydrationNutritionApp(),
+    ),
+  );
 }
 
 class HydrationNutritionApp extends StatelessWidget {
@@ -16,8 +25,12 @@ class HydrationNutritionApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        inputDecorationTheme: const InputDecorationTheme(filled: true),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+        ),
+        inputDecorationTheme: const InputDecorationTheme(
+          filled: true,
+        ),
       ),
       home: const LoginScreen(),
     );

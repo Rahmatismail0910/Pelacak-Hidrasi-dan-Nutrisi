@@ -25,7 +25,7 @@ class DatabaseService {
     final factory = platform.getAppDatabaseFactory();
 
     final options = OpenDatabaseOptions(
-      version: 1,
+      version: 2,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -46,6 +46,7 @@ class DatabaseService {
         name TEXT NOT NULL,
         email TEXT NOT NULL COLLATE NOCASE UNIQUE,
         password_hash TEXT NOT NULL,
+        recovery_code_hash TEXT,
         created_at TEXT NOT NULL
       )
     ''');
@@ -185,6 +186,9 @@ class DatabaseService {
     int oldVersion,
     int newVersion,
   ) async {
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE users ADD COLUMN recovery_code_hash TEXT');
+    }
     // Tambahkan migrasi secara bertahap jika struktur database berubah.
   }
 
