@@ -327,10 +327,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               maxY: maxY,
               minX: 0,
               maxX: (data.length - 1).toDouble(),
-              gridData: const FlGridData(
-                show: true,
-                drawVerticalLine: true,
-              ),
+              gridData: const FlGridData(show: true, drawVerticalLine: true),
               borderData: FlBorderData(
                 show: true,
                 border: Border.all(color: Colors.grey.shade300),
