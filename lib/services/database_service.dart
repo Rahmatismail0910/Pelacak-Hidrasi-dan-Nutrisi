@@ -1,4 +1,3 @@
-
 import 'package:sqflite_common/sqlite_api.dart';
 
 import 'database_factory_native.dart'
@@ -171,9 +170,7 @@ class DatabaseService {
     int newVersion,
   ) async {
     if (oldVersion < 2) {
-      await db.execute(
-        'ALTER TABLE users ADD COLUMN recovery_code_hash TEXT',
-      );
+      await db.execute('ALTER TABLE users ADD COLUMN recovery_code_hash TEXT');
     }
   }
 
