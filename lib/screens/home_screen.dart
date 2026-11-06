@@ -8,6 +8,7 @@ import '../services/nutrition_service.dart';
 import 'login_screen.dart';
 import 'hydration_screen.dart';
 import 'nutrition_screen.dart';
+import 'dashboard_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,7 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _summaryFuture = _loadSummary();
   }
 
-  // Mengambil ringkasan hidrasi dan nutrisi dari SQLite.
+  // Mengambil ringkasan hidrasi dan nutrisi dari database.
   Future<Map<String, Object?>> _loadSummary() async {
     final user = context.read<AuthProvider>().currentUser;
 
@@ -55,47 +56,6 @@ class _HomeScreenState extends State<HomeScreen> {
     await future;
   }
 
-  void _showComingSoon(BuildContext context, String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Halaman $feature akan dibuat selanjutnya.')),
-    );
-  }
-
-  // Fungsi logout.
-  Future<void> _logout(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Konfirmasi Keluar'),
-          content: const Text('Apakah Anda yakin ingin keluar dari aplikasi?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Batal'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Keluar'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed != true || !context.mounted) return;
-
-    await context.read<AuthProvider>().logout();
-
-    if (!context.mounted) return;
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (route) => false,
-    );
-  }
-
   // Navigasi ke halaman Hidrasi.
   Future<void> _openHydration() async {
     await Navigator.push(
@@ -120,6 +80,68 @@ class _HomeScreenState extends State<HomeScreen> {
     await _refreshSummary();
   }
 
+  // Navigasi ke halaman Dashboard.
+  Future<void> _openDashboard() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const DashboardScreen()),
+    );
+
+    if (!mounted) return;
+
+    await _refreshSummary();
+  }
+
+  // Menu yang belum dikerjakan.
+  // Halaman Notifikasi dan Profil belum dihubungkan.
+  void _showComingSoon(String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Fitur $feature belum tersedia.'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  // Fungsi logout.
+  Future<void> _logout(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Konfirmasi Keluar'),
+          content: const Text('Apakah Anda yakin ingin keluar dari aplikasi?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, false);
+              },
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, true);
+              },
+              child: const Text('Keluar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    await context.read<AuthProvider>().logout();
+
+    if (!context.mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
@@ -140,7 +162,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _refreshSummary,
@@ -159,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 const SizedBox(height: 6),
 
-                // Tanggal dan jam otomatis.
+                // Tanggal dan waktu otomatis.
                 StreamBuilder<DateTime>(
                   stream: Stream.periodic(
                     const Duration(seconds: 1),
@@ -208,8 +229,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       SizedBox(height: 8),
                       Text(
-                        'Pantau konsumsi air minum dan asupan kalori '
-                        'untuk membantu menjaga pola hidup sehat.',
+                        'Pantau konsumsi air minum dan asupan '
+                        'kalori untuk membantu menjaga pola '
+                        'hidup sehat.',
                       ),
                     ],
                   ),
@@ -224,7 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 const SizedBox(height: 14),
 
-                // Ringkasan dari database.
+                // Ringkasan data dari database.
                 FutureBuilder<Map<String, Object?>>(
                   future: _summaryFuture,
                   builder: (context, snapshot) {
@@ -238,12 +260,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
 
                     if (snapshot.hasError) {
-                      return const Card(
+                      return Card(
                         child: Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Text(
-                            'Gagal memuat ringkasan. '
-                            'Silakan coba refresh halaman.',
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            children: [
+                              const Text('Gagal memuat ringkasan.'),
+                              TextButton(
+                                onPressed: _refreshSummary,
+                                child: const Text('Coba lagi'),
+                              ),
+                            ],
                           ),
                         ),
                       );
@@ -290,7 +317,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 const SizedBox(height: 14),
 
-                // Menu Hidrasi.
+                // 1. Menu Hidrasi.
                 _buildMenuCard(
                   icon: Icons.water_drop,
                   title: 'Hidrasi',
@@ -299,7 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onTap: _openHydration,
                 ),
 
-                // Menu Nutrisi.
+                // 2. Menu Nutrisi.
                 _buildMenuCard(
                   icon: Icons.restaurant,
                   title: 'Nutrisi',
@@ -308,31 +335,33 @@ class _HomeScreenState extends State<HomeScreen> {
                   onTap: _openNutrition,
                 ),
 
-                // Menu Dashboard.
+                // 3. Menu Dashboard.
                 _buildMenuCard(
                   icon: Icons.bar_chart,
                   title: 'Dashboard',
-                  subtitle: 'Pantau grafik perkembangan harian dan mingguan.',
+                  subtitle: 'Pantau grafik perkembangan hidrasi dan nutrisi.',
                   color: Colors.purple,
-                  onTap: () => _showComingSoon(context, 'Dashboard'),
+                  onTap: _openDashboard,
                 ),
 
-                // Menu Notifikasi.
+                // 4. Menu Notifikasi.
+                // Belum dihubungkan karena dikerjakan teman.
                 _buildMenuCard(
-                  icon: Icons.notifications_active,
+                  icon: Icons.notifications,
                   title: 'Notifikasi',
-                  subtitle: 'Atur pengingat jadwal minum dan makan.',
+                  subtitle: 'Lihat pengingat jadwal minum dan aktivitas.',
                   color: Colors.orange,
-                  onTap: () => _showComingSoon(context, 'Notifikasi'),
+                  onTap: () => _showComingSoon('Notifikasi'),
                 ),
 
-                // Menu Profil.
+                // 5. Menu Profil.
+                // Belum dihubungkan karena dikerjakan teman.
                 _buildMenuCard(
                   icon: Icons.person,
                   title: 'Profil',
-                  subtitle: 'Kelola nama, usia, tinggi, dan berat badan.',
+                  subtitle: 'Lihat dan kelola informasi akun pengguna.',
                   color: Colors.teal,
-                  onTap: () => _showComingSoon(context, 'Profil'),
+                  onTap: () => _showComingSoon('Profil'),
                 ),
               ],
             ),
