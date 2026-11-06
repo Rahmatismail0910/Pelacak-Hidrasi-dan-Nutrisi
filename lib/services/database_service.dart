@@ -1,4 +1,4 @@
-//import 'package:flutter/foundation.dart';
+
 import 'package:sqflite_common/sqlite_api.dart';
 
 import 'database_factory_native.dart'
@@ -61,9 +61,7 @@ class DatabaseService {
         gender TEXT,
         activity_level TEXT,
         updated_at TEXT NOT NULL,
-        FOREIGN KEY (user_id)
-          REFERENCES users(id)
-          ON DELETE CASCADE
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )
     ''');
 
@@ -76,9 +74,7 @@ class DatabaseService {
         target_ml INTEGER NOT NULL,
         is_active INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL,
-        FOREIGN KEY (user_id)
-          REFERENCES users(id)
-          ON DELETE CASCADE
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )
     ''');
 
@@ -90,12 +86,9 @@ class DatabaseService {
         consumed_ml INTEGER NOT NULL,
         consumed_at TEXT NOT NULL,
         date_key TEXT NOT NULL,
-        FOREIGN KEY (user_id)
-          REFERENCES users(id)
-          ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY (schedule_id)
-          REFERENCES hydration_schedules(id)
-          ON DELETE SET NULL
+          REFERENCES hydration_schedules(id) ON DELETE SET NULL
       )
     ''');
 
@@ -109,9 +102,7 @@ class DatabaseService {
         meal_type TEXT NOT NULL,
         is_active INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL,
-        FOREIGN KEY (user_id)
-          REFERENCES users(id)
-          ON DELETE CASCADE
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )
     ''');
 
@@ -124,8 +115,7 @@ class DatabaseService {
         calories REAL NOT NULL DEFAULT 0,
         is_consumed INTEGER NOT NULL DEFAULT 0,
         FOREIGN KEY (schedule_id)
-          REFERENCES meal_schedules(id)
-          ON DELETE CASCADE
+          REFERENCES meal_schedules(id) ON DELETE CASCADE
       )
     ''');
 
@@ -139,12 +129,9 @@ class DatabaseService {
         calories REAL NOT NULL DEFAULT 0,
         consumed_at TEXT NOT NULL,
         date_key TEXT NOT NULL,
-        FOREIGN KEY (user_id)
-          REFERENCES users(id)
-          ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY (meal_item_id)
-          REFERENCES meal_items(id)
-          ON DELETE SET NULL
+          REFERENCES meal_items(id) ON DELETE SET NULL
       )
     ''');
 
@@ -159,9 +146,7 @@ class DatabaseService {
         total_calories REAL NOT NULL DEFAULT 0,
         updated_at TEXT NOT NULL,
         UNIQUE (user_id, date_key),
-        FOREIGN KEY (user_id)
-          REFERENCES users(id)
-          ON DELETE CASCADE
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )
     ''');
 
@@ -176,8 +161,7 @@ class DatabaseService {
     );
 
     await db.execute(
-      'CREATE INDEX idx_meal_schedules_user '
-      'ON meal_schedules(user_id)',
+      'CREATE INDEX idx_meal_schedules_user ON meal_schedules(user_id)',
     );
   }
 
@@ -187,9 +171,10 @@ class DatabaseService {
     int newVersion,
   ) async {
     if (oldVersion < 2) {
-      await db.execute('ALTER TABLE users ADD COLUMN recovery_code_hash TEXT');
+      await db.execute(
+        'ALTER TABLE users ADD COLUMN recovery_code_hash TEXT',
+      );
     }
-    // Tambahkan migrasi secara bertahap jika struktur database berubah.
   }
 
   Future<int> insert(String table, Map<String, Object?> values) async {
@@ -220,7 +205,6 @@ class DatabaseService {
     required List<Object?> whereArgs,
   }) async {
     final db = await database;
-
     return db.update(table, values, where: where, whereArgs: whereArgs);
   }
 
@@ -230,7 +214,6 @@ class DatabaseService {
     required List<Object?> whereArgs,
   }) async {
     final db = await database;
-
     return db.delete(table, where: where, whereArgs: whereArgs);
   }
 

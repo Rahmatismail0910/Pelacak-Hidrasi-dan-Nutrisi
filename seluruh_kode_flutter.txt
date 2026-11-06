@@ -1,0 +1,3688 @@
+﻿
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\app.dart
+========================================
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'providers/auth_provider.dart';
+//import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
+
+class HydrationNutritionApp extends StatelessWidget {
+  const HydrationNutritionApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => AuthProvider()..restoreSession(),
+      child: MaterialApp(
+        title: 'Pelacak Hidrasi dan Nutrisi',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+          inputDecorationTheme: const InputDecorationTheme(filled: true),
+        ),
+        home: const _AppEntryPoint(),
+      ),
+    );
+  }
+}
+
+class _AppEntryPoint extends StatelessWidget {
+  const _AppEntryPoint();
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+
+    if (auth.isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    //if (auth.isLoggedIn) {
+    //  return const HomeScreen();
+    //}
+
+    return const LoginScreen();
+  }
+}
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\main.dart
+========================================
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'providers/auth_provider.dart';
+import 'screens/login_screen.dart';
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => AuthProvider(),
+      child: const HydrationNutritionApp(),
+    ),
+  );
+}
+
+class HydrationNutritionApp extends StatelessWidget {
+  const HydrationNutritionApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Pelacak Hidrasi dan Nutrisi',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        inputDecorationTheme: const InputDecorationTheme(filled: true),
+      ),
+      home: const LoginScreen(),
+    );
+  }
+}
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\models\daily_summary_model.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\models\hydration_model.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\models\meal_model.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\models\profile_model.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\models\schedule_model.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\models\user_model.dart
+========================================
+class UserModel {
+  final int id;
+  final String name;
+  final String email;
+
+  const UserModel({required this.id, required this.name, required this.email});
+
+  factory UserModel.fromMap(Map<String, Object?> map) {
+    return UserModel(
+      id: map['id'] as int,
+      name: map['name'] as String,
+      email: map['email'] as String,
+    );
+  }
+}
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\providers\auth_provider.dart
+========================================
+import 'package:flutter/foundation.dart';
+
+import '../models/user_model.dart';
+import '../repositories/user_repository.dart';
+import '../services/password_hasher.dart';
+import '../services/session_services.dart';
+
+class AuthProvider extends ChangeNotifier {
+  final UserRepository _userRepository;
+  final SessionService _sessionService;
+
+  AuthProvider({UserRepository? userRepository, SessionService? sessionService})
+    : _userRepository = userRepository ?? UserRepository(),
+      _sessionService = sessionService ?? SessionService();
+
+  UserModel? _currentUser;
+  bool _isLoading = false;
+  String? _errorMessage;
+  String? _recoveryCode;
+
+  UserModel? get currentUser => _currentUser;
+  bool get isLoading => _isLoading;
+  bool get isLoggedIn => _currentUser != null;
+  String? get errorMessage => _errorMessage;
+
+  // Ditampilkan setelah registrasi atau reset password berhasil.
+  String? get recoveryCode => _recoveryCode;
+
+  Future<bool> register({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    _setLoading(true);
+
+    try {
+      _errorMessage = null;
+      _recoveryCode = null;
+
+      final generatedCode = PasswordHasher.generateRecoveryCode();
+
+      final user = await _userRepository.register(
+        name: name,
+        email: email,
+        password: password,
+        recoveryCode: generatedCode,
+      );
+
+      await _sessionService.saveSession(user.id);
+
+      _currentUser = user;
+      _recoveryCode = generatedCode;
+
+      return true;
+    } catch (e) {
+      _errorMessage = _readableError(e);
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<bool> login({required String email, required String password}) async {
+    _setLoading(true);
+
+    try {
+      _errorMessage = null;
+      _recoveryCode = null;
+
+      final user = await _userRepository.login(
+        email: email,
+        password: password,
+      );
+
+      if (user == null) {
+        _errorMessage = 'Email atau password salah.';
+        return false;
+      }
+
+      await _sessionService.saveSession(user.id);
+      _currentUser = user;
+
+      return true;
+    } catch (e) {
+      _errorMessage = _readableError(e);
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<bool> resetPassword({
+    required String email,
+    required String recoveryCode,
+    required String newPassword,
+  }) async {
+    _setLoading(true);
+
+    try {
+      _errorMessage = null;
+      _recoveryCode = null;
+
+      final newCode = await _userRepository.resetPassword(
+        email: email,
+        recoveryCode: recoveryCode,
+        newPassword: newPassword,
+      );
+
+      if (newCode == null) {
+        _errorMessage = 'Email atau kode pemulihan tidak sesuai.';
+        return false;
+      }
+
+      _recoveryCode = newCode;
+      return true;
+    } catch (e) {
+      _errorMessage = _readableError(e);
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> restoreSession() async {
+    _setLoading(true);
+
+    try {
+      final userId = await _sessionService.getUserId();
+
+      if (userId == null) {
+        _currentUser = null;
+        return;
+      }
+
+      _currentUser = await _userRepository.getById(userId);
+
+      if (_currentUser == null) {
+        await _sessionService.clearSession();
+      }
+    } catch (e) {
+      _errorMessage = _readableError(e);
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> logout() async {
+    _setLoading(true);
+
+    try {
+      await _sessionService.clearSession();
+      _currentUser = null;
+      _recoveryCode = null;
+      _errorMessage = null;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  void clearRecoveryCode() {
+    _recoveryCode = null;
+    notifyListeners();
+  }
+
+  void _setLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
+  }
+
+  String _readableError(Object error) {
+    final message = error.toString();
+
+    if (message.contains('Email sudah terdaftar')) {
+      return 'Email tersebut sudah digunakan.';
+    }
+
+    if (message.contains('Format email tidak valid')) {
+      return 'Masukkan alamat email yang valid.';
+    }
+
+    if (message.contains('Password minimal')) {
+      return 'Password minimal 8 karakter.';
+    }
+
+    if (message.contains('Nama wajib diisi')) {
+      return 'Nama wajib diisi.';
+    }
+
+    return 'Terjadi kesalahan. Silakan coba kembali.';
+  }
+}
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\providers\dashboard_provider.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\providers\hydration_provider.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\providers\nutrition_provider.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\providers\profile_provider.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\repositories\hydration_repository.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\repositories\nutrition_repository.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\repositories\user_repository.dart
+========================================
+import '../models/user_model.dart';
+import '../services/database_service.dart';
+import '../services/password_hasher.dart';
+
+class UserRepository {
+  final DatabaseService _database;
+
+  UserRepository({DatabaseService? database})
+    : _database = database ?? DatabaseService.instance;
+
+  Future<UserModel> register({
+    required String name,
+    required String email,
+    required String password,
+    required String recoveryCode,
+  }) async {
+    final cleanName = name.trim();
+    final cleanEmail = email.trim().toLowerCase();
+
+    if (cleanName.isEmpty) {
+      throw ArgumentError('Nama wajib diisi.');
+    }
+
+    if (!_isValidEmail(cleanEmail)) {
+      throw ArgumentError('Format email tidak valid.');
+    }
+
+    if (password.length < 8) {
+      throw ArgumentError('Password minimal 8 karakter.');
+    }
+
+    final existing = await _database.query(
+      'users',
+      where: 'email = ?',
+      whereArgs: [cleanEmail],
+    );
+
+    if (existing.isNotEmpty) {
+      throw StateError('Email sudah terdaftar.');
+    }
+
+    final passwordHash = await PasswordHasher.hash(password);
+    final recoveryHash = await PasswordHasher.hash(recoveryCode);
+
+    final id = await _database.insert('users', {
+      'name': cleanName,
+      'email': cleanEmail,
+      'password_hash': passwordHash,
+      'recovery_code_hash': recoveryHash,
+      'created_at': DateTime.now().toIso8601String(),
+    });
+
+    return UserModel(id: id, name: cleanName, email: cleanEmail);
+  }
+
+  Future<UserModel?> login({
+    required String email,
+    required String password,
+  }) async {
+    final cleanEmail = email.trim().toLowerCase();
+
+    final rows = await _database.query(
+      'users',
+      where: 'email = ?',
+      whereArgs: [cleanEmail],
+    );
+
+    if (rows.isEmpty) return null;
+
+    final user = rows.first;
+    final storedHash = user['password_hash'] as String;
+
+    final valid = await PasswordHasher.verify(password, storedHash);
+
+    if (!valid) return null;
+
+    return UserModel.fromMap(user);
+  }
+
+  Future<String?> resetPassword({
+    required String email,
+    required String recoveryCode,
+    required String newPassword,
+  }) async {
+    final cleanEmail = email.trim().toLowerCase();
+
+    if (!_isValidEmail(cleanEmail)) {
+      throw ArgumentError('Format email tidak valid.');
+    }
+
+    if (newPassword.length < 8) {
+      throw ArgumentError('Password minimal 8 karakter.');
+    }
+
+    final rows = await _database.query(
+      'users',
+      where: 'email = ?',
+      whereArgs: [cleanEmail],
+    );
+
+    if (rows.isEmpty) return null;
+
+    final user = rows.first;
+    final storedRecoveryHash = user['recovery_code_hash'] as String?;
+
+    if (storedRecoveryHash == null) return null;
+
+    final validRecoveryCode = await PasswordHasher.verify(
+      recoveryCode.trim().toUpperCase(),
+      storedRecoveryHash,
+    );
+
+    if (!validRecoveryCode) return null;
+
+    // Kode lama diganti agar tidak dapat digunakan kembali.
+    final newRecoveryCode = PasswordHasher.generateRecoveryCode();
+
+    final newPasswordHash = await PasswordHasher.hash(newPassword);
+    final newRecoveryHash = await PasswordHasher.hash(newRecoveryCode);
+
+    await _database.update(
+      'users',
+      {'password_hash': newPasswordHash, 'recovery_code_hash': newRecoveryHash},
+      where: 'id = ?',
+      whereArgs: [user['id']],
+    );
+
+    return newRecoveryCode;
+  }
+
+  Future<UserModel?> getById(int id) async {
+    final rows = await _database.query(
+      'users',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    if (rows.isEmpty) return null;
+
+    return UserModel.fromMap(rows.first);
+  }
+
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email);
+  }
+}
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\screens\dashboard_screen.dart
+========================================
+import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/auth_provider.dart';
+import '../services/dashboard_service.dart';
+
+class DashboardScreen extends StatefulWidget {
+  const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  String _selectedPeriod = 'Mingguan';
+
+  Future<List<Map<String, dynamic>>>? _dashboardFuture;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_dashboardFuture == null) {
+      _loadDashboard();
+    }
+  }
+
+  void _loadDashboard() {
+    final userId = context.read<AuthProvider>().currentUser?.id;
+
+    if (userId == null) return;
+
+    setState(() {
+      _dashboardFuture = _selectedPeriod == 'Mingguan'
+          ? DashboardService.instance.getWeeklyData(userId)
+          : DashboardService.instance.getMonthlyData(userId);
+    });
+  }
+
+  Future<void> _refreshDashboard() async {
+    final userId = context.read<AuthProvider>().currentUser?.id;
+
+    if (userId == null) return;
+
+    final future = _selectedPeriod == 'Mingguan'
+        ? DashboardService.instance.getWeeklyData(userId)
+        : DashboardService.instance.getMonthlyData(userId);
+
+    setState(() {
+      _dashboardFuture = future;
+    });
+
+    await future;
+  }
+
+  void _changePeriod(String period) {
+    if (_selectedPeriod == period) return;
+
+    setState(() {
+      _selectedPeriod = period;
+      _dashboardFuture = null;
+    });
+
+    _loadDashboard();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final userId = context.watch<AuthProvider>().currentUser?.id;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Dashboard'),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: _refreshDashboard,
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh data',
+          ),
+        ],
+      ),
+      body: userId == null
+          ? const Center(child: Text('Silakan login terlebih dahulu.'))
+          : RefreshIndicator(
+              onRefresh: _refreshDashboard,
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: _dashboardFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (snapshot.hasError) {
+                    return ListView(
+                      children: [
+                        const SizedBox(height: 120),
+                        const Icon(
+                          Icons.error_outline,
+                          size: 50,
+                          color: Colors.red,
+                        ),
+                        const SizedBox(height: 12),
+                        const Center(
+                          child: Text('Gagal memuat data dashboard.'),
+                        ),
+                        Center(
+                          child: TextButton(
+                            onPressed: _refreshDashboard,
+                            child: const Text('Coba lagi'),
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+
+                  final data = snapshot.data ?? [];
+
+                  if (data.isEmpty) {
+                    return const Center(
+                      child: Text('Belum ada data untuk ditampilkan.'),
+                    );
+                  }
+
+                  final totalWater = data.fold<double>(
+                    0,
+                    (total, item) =>
+                        total + (item['hydration'] as num).toDouble(),
+                  );
+
+                  final totalCalories = data.fold<double>(
+                    0,
+                    (total, item) =>
+                        total + (item['calories'] as num).toDouble(),
+                  );
+
+                  return ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      const Text(
+                        'Ringkasan Konsumsi',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Pantau perkembangan hidrasi dan nutrisi kamu.',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Pilihan periode grafik.
+                      Center(
+                        child: SegmentedButton<String>(
+                          segments: const [
+                            ButtonSegment(
+                              value: 'Mingguan',
+                              label: Text('Mingguan'),
+                              icon: Icon(Icons.calendar_view_week),
+                            ),
+                            ButtonSegment(
+                              value: 'Bulanan',
+                              label: Text('Bulanan'),
+                              icon: Icon(Icons.calendar_month),
+                            ),
+                          ],
+                          selected: {_selectedPeriod},
+                          onSelectionChanged: (selection) {
+                            _changePeriod(selection.first);
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Ringkasan hidrasi.
+                      _buildSummaryCard(
+                        title: 'Total Hidrasi',
+                        value: '${totalWater.toStringAsFixed(0)} ml',
+                        icon: Icons.water_drop,
+                        color: Colors.blue,
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Ringkasan nutrisi.
+                      _buildSummaryCard(
+                        title: 'Total Kalori',
+                        value: '${totalCalories.toStringAsFixed(0)} kkal',
+                        icon: Icons.restaurant,
+                        color: Colors.green,
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      const Text(
+                        'Grafik Hidrasi dan Nutrisi',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      _buildLegend(),
+
+                      const SizedBox(height: 16),
+
+                      _buildChart(data),
+
+                      const SizedBox(height: 16),
+
+                      Text(
+                        '* Grafik menampilkan jumlah konsumsi air (ml) '
+                        'dan kalori (kkal) berdasarkan tanggal.',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+    );
+  }
+
+  Widget _buildSummaryCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: color.withValues(alpha: 0.12),
+              child: Icon(icon, color: color),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: TextStyle(color: Colors.grey[600])),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLegend() {
+    return Wrap(
+      spacing: 20,
+      children: [
+        _legendItem(Colors.blue, 'Hidrasi (ml)'),
+        _legendItem(Colors.green, 'Nutrisi (kkal)'),
+      ],
+    );
+  }
+
+  Widget _legendItem(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 6),
+        Text(label, style: const TextStyle(fontSize: 12)),
+      ],
+    );
+  }
+
+  Widget _buildChart(List<Map<String, dynamic>> data) {
+    final waterSpots = <FlSpot>[];
+    final calorieSpots = <FlSpot>[];
+
+    for (var i = 0; i < data.length; i++) {
+      waterSpots.add(
+        FlSpot(i.toDouble(), (data[i]['hydration'] as num).toDouble()),
+      );
+
+      calorieSpots.add(
+        FlSpot(i.toDouble(), (data[i]['calories'] as num).toDouble()),
+      );
+    }
+
+    final values = [
+      ...waterSpots.map((spot) => spot.y),
+      ...calorieSpots.map((spot) => spot.y),
+    ];
+
+    final highestValue = values.isEmpty
+        ? 1000.0
+        : values.reduce((a, b) => a > b ? a : b);
+
+    final maxY = highestValue == 0 ? 1000.0 : highestValue * 1.2;
+
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 20, 20, 12),
+        child: SizedBox(
+          height: 280,
+          child: LineChart(
+            LineChartData(
+              minY: 0,
+              maxY: maxY,
+              minX: 0,
+              maxX: (data.length - 1).toDouble(),
+              gridData: FlGridData(show: true, drawVerticalLine: true),
+              borderData: FlBorderData(
+                show: true,
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              lineTouchData: LineTouchData(
+                enabled: true,
+                touchTooltipData: LineTouchTooltipData(
+                  getTooltipItems: (spots) {
+                    return spots.map((spot) {
+                      final label = spot.barIndex == 0 ? 'Hidrasi' : 'Nutrisi';
+
+                      final unit = spot.barIndex == 0 ? 'ml' : 'kkal';
+
+                      return LineTooltipItem(
+                        '$label\n${spot.y.toStringAsFixed(0)} $unit',
+                        const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      );
+                    }).toList();
+                  },
+                ),
+              ),
+              titlesData: FlTitlesData(
+                topTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                rightTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                leftTitles: AxisTitles(
+                  axisNameWidget: const Text(
+                    'Jumlah (ml / kkal)',
+                    style: TextStyle(fontSize: 10),
+                  ),
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 48,
+                    interval: maxY / 4,
+                    getTitlesWidget: (value, meta) {
+                      return SideTitleWidget(
+                        meta: meta,
+                        child: Text(
+                          value.toInt().toString(),
+                          style: const TextStyle(fontSize: 10),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                bottomTitles: AxisTitles(
+                  axisNameWidget: const Text(
+                    'Tanggal',
+                    style: TextStyle(fontSize: 11),
+                  ),
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 38,
+                    interval: data.length > 1 ? (data.length - 1) / 3 : 1,
+                    getTitlesWidget: (value, meta) {
+                      final index = value.round();
+
+                      if (index < 0 || index >= data.length) {
+                        return const SizedBox.shrink();
+                      }
+
+                      final date = DateTime.tryParse(
+                        data[index]['date'].toString(),
+                      );
+
+                      if (date == null) {
+                        return const SizedBox.shrink();
+                      }
+
+                      return SideTitleWidget(
+                        meta: meta,
+                        child: Text(
+                          '${date.day}/${date.month}',
+                          style: const TextStyle(fontSize: 10),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              lineBarsData: [
+                LineChartBarData(
+                  spots: waterSpots,
+                  isCurved: true,
+                  color: Colors.blue,
+                  barWidth: 3,
+                  dotData: const FlDotData(show: true),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    color: Colors.blue.withValues(alpha: 0.08),
+                  ),
+                ),
+                LineChartBarData(
+                  spots: calorieSpots,
+                  isCurved: true,
+                  color: Colors.green,
+                  barWidth: 3,
+                  dotData: const FlDotData(show: true),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    color: Colors.green.withValues(alpha: 0.08),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\screens\forgot_password_screen.dart
+========================================
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/auth_provider.dart';
+
+class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({super.key});
+
+  @override
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+}
+
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _recoveryController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  bool _obscurePassword = true;
+  bool _obscureConfirmation = true;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _recoveryController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _resetPassword() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final auth = context.read<AuthProvider>();
+
+    final success = await auth.resetPassword(
+      email: _emailController.text,
+      recoveryCode: _recoveryController.text,
+      newPassword: _passwordController.text,
+    );
+
+    if (!mounted) return;
+
+    if (!success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(auth.errorMessage ?? 'Reset password gagal.')),
+      );
+      return;
+    }
+
+    final newRecoveryCode = auth.recoveryCode;
+
+    if (newRecoveryCode == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Kode pemulihan baru tidak tersedia.')),
+      );
+      return;
+    }
+
+    await _showNewRecoveryCode(newRecoveryCode);
+
+    if (!mounted) return;
+
+    auth.clearRecoveryCode();
+
+    Navigator.of(context).pop();
+  }
+
+  Future<void> _showNewRecoveryCode(String code) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return PopScope(
+          canPop: false,
+          child: AlertDialog(
+            icon: const Icon(
+              Icons.check_circle_outline,
+              color: Colors.green,
+              size: 48,
+            ),
+            title: const Text(
+              'Password berhasil diubah!',
+              textAlign: TextAlign.center,
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Kode pemulihan lama sudah tidak berlaku. '
+                  'Simpan kode pemulihan baru berikut.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                SelectableText(
+                  code,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Clipboard.setData(ClipboardData(text: code));
+                    if (!dialogContext.mounted) return;
+
+                    ScaffoldMessenger.of(dialogContext).showSnackBar(
+                      const SnackBar(content: Text('Kode pemulihan disalin.')),
+                    );
+                  },
+                  icon: const Icon(Icons.copy),
+                  label: const Text('Salin kode baru'),
+                ),
+              ],
+            ),
+            actions: [
+              FilledButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                },
+                child: const Text('Kembali ke login'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Lupa Password')),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Icon(Icons.lock_reset, size: 64, color: Colors.blue),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Reset Password',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Masukkan email dan kode pemulihan akun '
+                      'untuk membuat password baru.',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 28),
+                    TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      autofillHints: const [AutofillHints.email],
+                      decoration: const InputDecoration(
+                        labelText: 'Email terdaftar',
+                        prefixIcon: Icon(Icons.email_outlined),
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        final email = value?.trim() ?? '';
+
+                        if (email.isEmpty) {
+                          return 'Email wajib diisi.';
+                        }
+
+                        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                            .hasMatch(email)) {
+                          return 'Format email tidak valid.';
+                        }
+
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _recoveryController,
+                      textCapitalization: TextCapitalization.characters,
+                      decoration: const InputDecoration(
+                        labelText: 'Kode pemulihan',
+                        hintText: 'HYDR-...',
+                        prefixIcon: Icon(Icons.vpn_key_outlined),
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Kode pemulihan wajib diisi.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      autofillHints: const [AutofillHints.newPassword],
+                      decoration: InputDecoration(
+                        labelText: 'Password baru',
+                        helperText: 'Minimal 8 karakter.',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                          ),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Password baru wajib diisi.';
+                        }
+                        if (value.length < 8) {
+                          return 'Password minimal 8 karakter.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _confirmPasswordController,
+                      obscureText: _obscureConfirmation,
+                      decoration: InputDecoration(
+                        labelText: 'Konfirmasi password baru',
+                        prefixIcon: const Icon(Icons.lock_reset),
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          onPressed: () {
+                            setState(() {
+                              _obscureConfirmation = !_obscureConfirmation;
+                            });
+                          },
+                          icon: Icon(
+                            _obscureConfirmation
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                          ),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Konfirmasi password wajib diisi.';
+                        }
+                        if (value != _passwordController.text) {
+                          return 'Konfirmasi password tidak cocok.';
+                        }
+                        return null;
+                      },
+                      onFieldSubmitted: (_) => _resetPassword(),
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton(
+                      onPressed: auth.isLoading ? null : _resetPassword,
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: auth.isLoading
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text('Ubah Password'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Kembali ke login'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\screens\home_screen.dart
+========================================
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/auth_provider.dart';
+import '../services/hydration_service.dart';
+import '../services/nutrition_service.dart';
+
+import 'login_screen.dart';
+import 'hydration_screen.dart';
+import 'nutrition_screen.dart';
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late Future<Map<String, Object?>> _summaryFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _summaryFuture = _loadSummary();
+  }
+
+  // Mengambil ringkasan hidrasi dan nutrisi dari SQLite.
+  Future<Map<String, Object?>> _loadSummary() async {
+    final user = context.read<AuthProvider>().currentUser;
+
+    if (user == null) {
+      return {'total_water_ml': 0, 'target_water_ml': 0, 'total_calories': 0};
+    }
+
+    final hydration = await HydrationService.instance.getTodaySummary(user.id);
+
+    final calories = await NutritionService.instance.getTodayCalories(user.id);
+
+    return {
+      'total_water_ml': hydration['total_water_ml'] ?? 0,
+      'target_water_ml': hydration['target_water_ml'] ?? 0,
+      'total_calories': calories,
+    };
+  }
+
+  // Memuat ulang ringkasan.
+  Future<void> _refreshSummary() async {
+    final future = _loadSummary();
+
+    setState(() {
+      _summaryFuture = future;
+    });
+
+    await future;
+  }
+
+  void _showComingSoon(BuildContext context, String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Halaman $feature akan dibuat selanjutnya.')),
+    );
+  }
+
+  // Fungsi logout.
+  Future<void> _logout(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Konfirmasi Keluar'),
+          content: const Text('Apakah Anda yakin ingin keluar dari aplikasi?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Keluar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    await context.read<AuthProvider>().logout();
+
+    if (!context.mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
+  // Navigasi ke halaman Hidrasi.
+  Future<void> _openHydration() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const HydrationScreen()),
+    );
+
+    if (!mounted) return;
+
+    await _refreshSummary();
+  }
+
+  // Navigasi ke halaman Nutrisi.
+  Future<void> _openNutrition() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const NutritionScreen()),
+    );
+
+    if (!mounted) return;
+
+    await _refreshSummary();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final user = context.watch<AuthProvider>().currentUser;
+    final userName = user?.name ?? 'Pengguna';
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Beranda',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Keluar',
+            onPressed: () => _logout(context),
+            icon: const Icon(Icons.logout),
+          ),
+        ],
+      ),
+
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: _refreshSummary,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Salam pengguna.
+                Text(
+                  'Halo, $userName!',
+                  style: Theme.of(context).textTheme.headlineMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+
+                const SizedBox(height: 6),
+
+                // Tanggal dan jam otomatis.
+                StreamBuilder<DateTime>(
+                  stream: Stream.periodic(
+                    const Duration(seconds: 1),
+                    (_) => DateTime.now(),
+                  ),
+                  initialData: now,
+                  builder: (context, snapshot) {
+                    final currentTime = snapshot.data ?? DateTime.now();
+
+                    final date = MaterialLocalizations.of(context)
+                        .formatFullDate(currentTime);
+
+                    final time =
+                        '${currentTime.hour.toString().padLeft(2, '0')}:'
+                        '${currentTime.minute.toString().padLeft(2, '0')}:'
+                        '${currentTime.second.toString().padLeft(2, '0')}';
+
+                    return Text(
+                      '$date â€¢ $time',
+                      style: TextStyle(color: Colors.grey.shade600),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 24),
+
+                // Kartu pengenalan.
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.favorite, size: 36, color: Colors.blue),
+                      SizedBox(height: 12),
+                      Text(
+                        'Mulai Hari Lebih Sehat',
+                        style: TextStyle(
+                          fontSize: 21,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Pantau konsumsi air minum dan asupan kalori '
+                        'untuk membantu menjaga pola hidup sehat.',
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                const Text(
+                  'Ringkasan Hari Ini',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+
+                const SizedBox(height: 14),
+
+                // Ringkasan dari database.
+                FutureBuilder<Map<String, Object?>>(
+                  future: _summaryFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+
+                    if (snapshot.hasError) {
+                      return const Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text(
+                            'Gagal memuat ringkasan. '
+                            'Silakan coba refresh halaman.',
+                          ),
+                        ),
+                      );
+                    }
+
+                    final summary = snapshot.data ?? {};
+
+                    final totalWater =
+                        (summary['total_water_ml'] as num?)?.toInt() ?? 0;
+
+                    final totalCalories =
+                        (summary['total_calories'] as num?)?.toDouble() ?? 0;
+
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: _buildSummaryCard(
+                            icon: Icons.water_drop,
+                            title: 'Hidrasi',
+                            value: '$totalWater ml',
+                            color: Colors.blue,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildSummaryCard(
+                            icon: Icons.local_fire_department,
+                            title: 'Kalori',
+                            value: '${totalCalories.toStringAsFixed(0)} kkal',
+                            color: Colors.green,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 28),
+
+                const Text(
+                  'Menu Utama',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+
+                const SizedBox(height: 14),
+
+                // Menu Hidrasi.
+                _buildMenuCard(
+                  icon: Icons.water_drop,
+                  title: 'Hidrasi',
+                  subtitle: 'Hitung kebutuhan air dan atur jadwal minum.',
+                  color: Colors.blue,
+                  onTap: _openHydration,
+                ),
+
+                // Menu Nutrisi.
+                _buildMenuCard(
+                  icon: Icons.restaurant,
+                  title: 'Nutrisi',
+                  subtitle: 'Catat makanan dan hitung kalori harian.',
+                  color: Colors.green,
+                  onTap: _openNutrition,
+                ),
+
+                // Menu Dashboard.
+                _buildMenuCard(
+                  icon: Icons.bar_chart,
+                  title: 'Dashboard',
+                  subtitle: 'Pantau grafik perkembangan harian dan mingguan.',
+                  color: Colors.purple,
+                  onTap: () => _showComingSoon(context, 'Dashboard'),
+                ),
+
+                // Menu Notifikasi.
+                _buildMenuCard(
+                  icon: Icons.notifications_active,
+                  title: 'Notifikasi',
+                  subtitle: 'Atur pengingat jadwal minum dan makan.',
+                  color: Colors.orange,
+                  onTap: () => _showComingSoon(context, 'Notifikasi'),
+                ),
+
+                // Menu Profil.
+                _buildMenuCard(
+                  icon: Icons.person,
+                  title: 'Profil',
+                  subtitle: 'Kelola nama, usia, tinggi, dan berat badan.',
+                  color: Colors.teal,
+                  onTap: () => _showComingSoon(context, 'Profil'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Widget kartu ringkasan.
+  Widget _buildSummaryCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color color,
+  }) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color, size: 30),
+            const SizedBox(height: 12),
+            Text(title, style: TextStyle(color: Colors.grey.shade700)),
+            const SizedBox(height: 6),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Widget kartu menu.
+  Widget _buildMenuCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      clipBehavior: Clip.antiAlias,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 10,
+        ),
+        leading: CircleAvatar(
+          backgroundColor: color.withValues(alpha: 0.12),
+          child: Icon(icon, color: color),
+        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: onTap,
+      ),
+    );
+  }
+}
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\screens\hydration_screen.dart
+========================================
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../services/hydration_service.dart';
+import '../providers/auth_provider.dart';
+
+class HydrationScreen extends StatefulWidget {
+  const HydrationScreen({super.key});
+
+  @override
+  State<HydrationScreen> createState() => _HydrationScreenState();
+}
+
+class _HydrationScreenState extends State<HydrationScreen> {
+  final TextEditingController _targetController = TextEditingController(
+    text: '2000',
+  );
+
+  final TextEditingController _amountController = TextEditingController(
+    text: '250',
+  );
+
+  int _dailyTarget = 2000;
+  int _totalDrunk = 0;
+  int _savedTotal = 0;
+
+  bool _isSaving = false;
+  bool _isLoading = true;
+
+  final List<Map<String, dynamic>> _schedule = [
+    {'time': '07:00', 'amount': 250, 'completed': false},
+    {'time': '09:00', 'amount': 250, 'completed': false},
+    {'time': '11:00', 'amount': 250, 'completed': false},
+    {'time': '13:00', 'amount': 250, 'completed': false},
+    {'time': '15:00', 'amount': 250, 'completed': false},
+    {'time': '17:00', 'amount': 250, 'completed': false},
+    {'time': '19:00', 'amount': 250, 'completed': false},
+    {'time': '21:00', 'amount': 250, 'completed': false},
+  ];
+
+  double get _progress =>
+      _dailyTarget > 0 ? (_totalDrunk / _dailyTarget).clamp(0.0, 1.0) : 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHydration();
+  }
+
+  Future<void> _loadHydration() async {
+    final user = context.read<AuthProvider>().currentUser;
+
+    if (user == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    try {
+      final summary = await HydrationService.instance.getTodaySummary(user.id);
+
+      if (!mounted) return;
+
+      final total = (summary['total_water_ml'] as num?)?.toInt() ?? 0;
+      final target = (summary['target_water_ml'] as num?)?.toInt() ?? 2000;
+
+      setState(() {
+        _totalDrunk = total;
+        _savedTotal = total;
+        _dailyTarget = target > 0 ? target : 2000;
+        _targetController.text = _dailyTarget.toString();
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showMessage('Gagal memuat data hidrasi: $e');
+    }
+  }
+
+  void _addWater() {
+    final amount = int.tryParse(_amountController.text);
+
+    if (amount == null || amount <= 0) {
+      _showMessage('Masukkan jumlah air yang valid.');
+      return;
+    }
+
+    setState(() {
+      _totalDrunk += amount;
+    });
+
+    _showMessage('$amount ml air berhasil dicatat. Tekan Simpan Hidrasi.');
+  }
+
+  void _updateTarget() {
+    final target = int.tryParse(_targetController.text);
+
+    if (target == null || target <= 0) {
+      _showMessage('Masukkan target air yang valid.');
+      return;
+    }
+
+    setState(() {
+      _dailyTarget = target;
+    });
+
+    _showMessage('Target diperbarui. Tekan Simpan Hidrasi untuk menyimpan.');
+  }
+
+  void _toggleSchedule(int index, bool? value) {
+    final completed = value ?? false;
+    final item = _schedule[index];
+    final amount = item['amount'] as int;
+
+    setState(() {
+      if (item['completed'] == completed) return;
+
+      item['completed'] = completed;
+      _totalDrunk += completed ? amount : -amount;
+
+      if (_totalDrunk < 0) {
+        _totalDrunk = 0;
+      }
+    });
+  }
+
+  Future<void> _saveHydration() async {
+    if (_isSaving) return;
+
+    final user = context.read<AuthProvider>().currentUser;
+
+    if (user == null) {
+      _showMessage('Silakan login terlebih dahulu.');
+      return;
+    }
+
+    final unsavedAmount = _totalDrunk - _savedTotal;
+
+    if (unsavedAmount < 0) {
+      _showMessage(
+        'Jumlah konsumsi lebih kecil dari data tersimpan. '
+        'Data lama tidak akan dihapus.',
+      );
+      return;
+    }
+
+    if (unsavedAmount == 0 && _dailyTarget == 0) {
+      _showMessage('Tidak ada data baru untuk disimpan.');
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      await HydrationService.instance.saveHydration(
+        userId: user.id,
+        amountMl: unsavedAmount,
+        targetMl: _dailyTarget,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _savedTotal = _totalDrunk;
+      });
+
+      _showMessage('Data hidrasi berhasil disimpan.');
+    } catch (e) {
+      _showMessage('Gagal menyimpan data hidrasi: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  @override
+  void dispose() {
+    _targetController.dispose();
+    _amountController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Kalkulator Hidrasi',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: SafeArea(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Konsumsi Air Hari Ini',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          children: [
+                            const Icon(
+                              Icons.water_drop,
+                              color: Colors.blue,
+                              size: 45,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              '$_totalDrunk ml',
+                              style: const TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text('dari $_dailyTarget ml'),
+                            const SizedBox(height: 16),
+                            LinearProgressIndicator(
+                              value: _progress,
+                              minHeight: 12,
+                              borderRadius: BorderRadius.circular(10),
+                              color: Colors.blue,
+                              backgroundColor: Colors.blue.shade100,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${(_progress * 100).toStringAsFixed(0)}% tercapai',
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Belum disimpan: ${_totalDrunk - _savedTotal} ml',
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    const Text(
+                      'Target Minum Harian',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _targetController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'Target air (ml)',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        FilledButton(
+                          onPressed: _updateTarget,
+                          child: const Text('Perbarui'),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    const Text(
+                      'Catat Air Minum',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _amountController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'Jumlah air (ml)',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        FilledButton.icon(
+                          onPressed: _addWater,
+                          icon: const Icon(Icons.add),
+                          label: const Text('Catat'),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    const Text(
+                      'Jadwal Minum Air',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    ...List.generate(_schedule.length, (index) {
+                      final item = _schedule[index];
+
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: CheckboxListTile(
+                          value: item['completed'] as bool,
+                          onChanged: (value) => _toggleSchedule(index, value),
+                          secondary: const Icon(
+                            Icons.water_drop,
+                            color: Colors.blue,
+                          ),
+                          title: Text('${item['time']}'),
+                          subtitle: Text('${item['amount']} ml air'),
+                          controlAffinity: ListTileControlAffinity.trailing,
+                        ),
+                      );
+                    }),
+
+                    const SizedBox(height: 20),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: _isSaving ? null : _saveHydration,
+                        icon: const Icon(Icons.save),
+                        label: Text(
+                          _isSaving ? 'Menyimpan...' : 'Simpan Hidrasi',
+                        ),
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+      ),
+    );
+  }
+}
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\screens\login_screen.dart
+========================================
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/auth_provider.dart';
+import 'home_screen.dart';
+import 'forgot_password_screen.dart';
+import 'register_screen.dart';
+
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  bool _obscurePassword = true;
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _login() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final authProvider = context.read<AuthProvider>();
+
+    try {
+      final success = await authProvider.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (success) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              authProvider.errorMessage ?? 'Email atau password tidak sesuai.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Login gagal: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  void _openForgotPassword() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Icon(
+                      Icons.health_and_safety,
+                      size: 80,
+                      color: Colors.blue,
+                    ),
+                    const SizedBox(height: 16),
+
+                    const Text(
+                      'Pelacak Hidrasi dan Nutrisi',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 25,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    Text(
+                      'Pantau kebutuhan air dan asupan nutrisi harianmu.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
+                    const SizedBox(height: 36),
+
+                    const Text(
+                      'Login',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        hintText: 'Masukkan email',
+                        prefixIcon: Icon(Icons.email_outlined),
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        final email = value?.trim() ?? '';
+
+                        if (email.isEmpty) {
+                          return 'Email wajib diisi';
+                        }
+
+                        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                            .hasMatch(email)) {
+                          return 'Format email tidak valid';
+                        }
+
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        hintText: 'Masukkan password',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Password wajib diisi';
+                        }
+
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: _openForgotPassword,
+                        child: const Text('Lupa Password?'),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    SizedBox(
+                      height: 50,
+                      child: FilledButton(
+                        onPressed: _isLoading ? null : _login,
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                'Login',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const RegisterScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text('Belum punya akun? Daftar'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\screens\notification_screen.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\screens\nutrition_screen.dart
+========================================
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/auth_provider.dart';
+import '../services/nutrition_service.dart';
+
+class NutritionScreen extends StatefulWidget {
+  const NutritionScreen({super.key});
+
+  @override
+  State<NutritionScreen> createState() => _NutritionScreenState();
+}
+
+class _NutritionScreenState extends State<NutritionScreen> {
+  final TextEditingController _foodController = TextEditingController();
+  final TextEditingController _portionController = TextEditingController(
+    text: '100',
+  );
+  final TextEditingController _caloriesController = TextEditingController();
+
+  String _selectedMeal = 'Sarapan';
+  List<Map<String, Object?>> _foods = [];
+  double _totalCalories = 0;
+  bool _isLoading = true;
+  bool _isSaving = false;
+
+  final List<String> _mealTypes = [
+    'Sarapan',
+    'Makan Siang',
+    'Makan Malam',
+    'Camilan',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFoods();
+  }
+
+  Future<void> _loadFoods() async {
+    final user = context.read<AuthProvider>().currentUser;
+
+    if (user == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    try {
+      final foods = await NutritionService.instance.getTodayFoods(user.id);
+      final calories = await NutritionService.instance.getTodayCalories(
+        user.id,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _foods = foods;
+        _totalCalories = calories;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showMessage('Gagal memuat data nutrisi: $e');
+    }
+  }
+
+  Future<void> _saveFood() async {
+    if (_isSaving) return;
+
+    final name = _foodController.text.trim();
+    final portion = double.tryParse(_portionController.text);
+    final calories = double.tryParse(_caloriesController.text);
+
+    if (name.isEmpty) {
+      _showMessage('Masukkan nama makanan.');
+      return;
+    }
+
+    if (portion == null || portion <= 0) {
+      _showMessage('Masukkan porsi makanan yang valid.');
+      return;
+    }
+
+    if (calories == null || calories < 0) {
+      _showMessage('Masukkan jumlah kalori yang valid.');
+      return;
+    }
+
+    final user = context.read<AuthProvider>().currentUser;
+
+    if (user == null) {
+      _showMessage('Silakan login terlebih dahulu.');
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      await NutritionService.instance.saveFood(
+        userId: user.id,
+        foodName: name,
+        portionGrams: portion,
+        calories: calories,
+        mealType: _selectedMeal,
+      );
+
+      _foodController.clear();
+      _portionController.text = '100';
+      _caloriesController.clear();
+
+      await _loadFoods();
+
+      if (!mounted) return;
+      _showMessage('Makanan berhasil disimpan.');
+    } catch (e) {
+      _showMessage('Gagal menyimpan makanan: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  @override
+  void dispose() {
+    _foodController.dispose();
+    _portionController.dispose();
+    _caloriesController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Kalkulator Nutrisi',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Muat ulang',
+            onPressed: _loadFoods,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : RefreshIndicator(
+                onRefresh: _loadFoods,
+                child: ListView(
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    const Text(
+                      'Asupan Kalori Hari Ini',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.local_fire_department,
+                              color: Colors.green,
+                              size: 45,
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${_totalCalories.toStringAsFixed(0)} kkal',
+                                    style: const TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const Text('Total kalori hari ini'),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    const Text(
+                      'Tambah Makanan',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedMeal,
+                      decoration: const InputDecoration(
+                        labelText: 'Jadwal makan',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: _mealTypes.map((meal) {
+                        return DropdownMenuItem(value: meal, child: Text(meal));
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() => _selectedMeal = value);
+                        }
+                      },
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    TextField(
+                      controller: _foodController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nama makanan',
+                        hintText: 'Contoh: Nasi goreng',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    TextField(
+                      controller: _portionController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'Porsi makanan (gram)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    TextField(
+                      controller: _caloriesController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'Kalori (kkal)',
+                        hintText: 'Contoh: 250',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: _isSaving ? null : _saveFood,
+                        icon: const Icon(Icons.save),
+                        label: Text(
+                          _isSaving ? 'Menyimpan...' : 'Simpan Makanan',
+                        ),
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    const Text(
+                      'Riwayat Makanan Hari Ini',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    if (_foods.isEmpty)
+                      const Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(20),
+                          child: Center(
+                            child: Text('Belum ada makanan yang dicatat.'),
+                          ),
+                        ),
+                      )
+                    else
+                      ..._foods.map((food) {
+                        final name = food['food_name']?.toString() ?? '';
+                        final portion =
+                            (food['portion_grams'] as num?)?.toDouble() ?? 0;
+                        final calories =
+                            (food['calories'] as num?)?.toDouble() ?? 0;
+                        final time = food['consumed_at']?.toString() ?? '';
+
+                        final dateTime = DateTime.tryParse(time);
+                        final timeLabel = dateTime == null
+                            ? ''
+                            : '${dateTime.hour.toString().padLeft(2, '0')}:'
+                                  '${dateTime.minute.toString().padLeft(2, '0')}';
+
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          child: ListTile(
+                            leading: const CircleAvatar(
+                              child: Icon(Icons.restaurant),
+                            ),
+                            title: Text(name),
+                            subtitle: Text('$portion gram â€¢ $timeLabel'),
+                            trailing: Text(
+                              '${calories.toStringAsFixed(0)} kkal',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                  ],
+                ),
+              ),
+      ),
+    );
+  }
+}
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\screens\profile_screen.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\screens\register_screen.dart
+========================================
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/auth_provider.dart';
+import 'home_screen.dart';
+
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
+
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  bool _obscurePassword = true;
+  bool _obscureConfirmation = true;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _register() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final auth = context.read<AuthProvider>();
+
+    final success = await auth.register(
+      name: _nameController.text,
+      email: _emailController.text,
+      password: _passwordController.text,
+    );
+
+    if (!mounted) return;
+
+    if (!success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(auth.errorMessage ?? 'Registrasi gagal.')),
+      );
+      return;
+    }
+
+    final recoveryCode = auth.recoveryCode;
+
+    if (recoveryCode == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Kode pemulihan tidak berhasil dibuat.')),
+      );
+      return;
+    }
+
+    await _showRecoveryCode(recoveryCode);
+
+    if (!mounted) return;
+
+    auth.clearRecoveryCode();
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      (route) => false,
+    );
+  }
+
+  Future<void> _showRecoveryCode(String code) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return PopScope(
+          canPop: false,
+          child: AlertDialog(
+            icon: const Icon(
+              Icons.verified_user_outlined,
+              color: Colors.green,
+              size: 48,
+            ),
+            title: const Text(
+              'Akun berhasil dibuat!',
+              textAlign: TextAlign.center,
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Simpan kode pemulihan berikut. '
+                  'Kode ini diperlukan jika kamu lupa password.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                SelectableText(
+                  code,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Clipboard.setData(ClipboardData(text: code));
+
+                    if (!dialogContext.mounted) return;
+
+                    ScaffoldMessenger.of(dialogContext).showSnackBar(
+                      const SnackBar(content: Text('Kode pemulihan disalin.')),
+                    );
+                  },
+                  icon: const Icon(Icons.copy),
+                  label: const Text('Salin kode'),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Jangan bagikan kode ini kepada orang lain. '
+                  'Kode lama tidak dapat ditampilkan kembali.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: Colors.red),
+                ),
+              ],
+            ),
+            actions: [
+              FilledButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                },
+                child: const Text('Saya sudah menyimpan'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Buat Akun')),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Icon(
+                      Icons.person_add_alt_1,
+                      size: 64,
+                      color: Colors.blue,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Buat Akun Baru',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    TextFormField(
+                      controller: _nameController,
+                      textCapitalization: TextCapitalization.words,
+                      autofillHints: const [AutofillHints.name],
+                      decoration: const InputDecoration(
+                        labelText: 'Nama lengkap',
+                        prefixIcon: Icon(Icons.person_outline),
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Nama wajib diisi.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      autofillHints: const [AutofillHints.email],
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        prefixIcon: Icon(Icons.email_outlined),
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        final email = value?.trim() ?? '';
+
+                        if (email.isEmpty) {
+                          return 'Email wajib diisi.';
+                        }
+
+                        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                            .hasMatch(email)) {
+                          return 'Format email tidak valid.';
+                        }
+
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      autofillHints: const [AutofillHints.newPassword],
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        helperText: 'Minimal 8 karakter.',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                          ),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Password wajib diisi.';
+                        }
+                        if (value.length < 8) {
+                          return 'Password minimal 8 karakter.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _confirmPasswordController,
+                      obscureText: _obscureConfirmation,
+                      decoration: InputDecoration(
+                        labelText: 'Konfirmasi password',
+                        prefixIcon: const Icon(Icons.lock_reset),
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          onPressed: () {
+                            setState(() {
+                              _obscureConfirmation = !_obscureConfirmation;
+                            });
+                          },
+                          icon: Icon(
+                            _obscureConfirmation
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                          ),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Konfirmasi password wajib diisi.';
+                        }
+                        if (value != _passwordController.text) {
+                          return 'Konfirmasi password tidak cocok.';
+                        }
+                        return null;
+                      },
+                      onFieldSubmitted: (_) => _register(),
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton(
+                      onPressed: auth.isLoading ? null : _register,
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: auth.isLoading
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text('Daftar'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Sudah punya akun? Masuk'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\services\api_service.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\services\auth_service.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\services\dashboard_service.dart
+========================================
+import 'database_service.dart';
+
+class DashboardService {
+  DashboardService._();
+
+  static final DashboardService instance = DashboardService._();
+
+  String _dateKey(DateTime date) {
+    final year = date.year.toString().padLeft(4, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+
+    return '$year-$month-$day';
+  }
+
+  Future<List<Map<String, dynamic>>> _getChartData({
+    required int userId,
+    required int days,
+  }) async {
+    final db = await DatabaseService.instance.database;
+
+    final today = DateTime.now();
+
+    final dates = List.generate(
+      days,
+      (index) => DateTime(
+        today.year,
+        today.month,
+        today.day,
+      ).subtract(Duration(days: days - 1 - index)),
+    );
+
+    final startDate = _dateKey(dates.first);
+    final endDate = _dateKey(dates.last);
+
+    final hydrationResults = await db.rawQuery(
+      '''
+      SELECT date_key, SUM(consumed_ml) AS total
+      FROM hydration_logs
+      WHERE user_id = ?
+        AND date_key BETWEEN ? AND ?
+      GROUP BY date_key
+      ORDER BY date_key
+      ''',
+      [userId, startDate, endDate],
+    );
+
+    final nutritionResults = await db.rawQuery(
+      '''
+      SELECT date_key, SUM(calories) AS total
+      FROM nutrition_logs
+      WHERE user_id = ?
+        AND date_key BETWEEN ? AND ?
+      GROUP BY date_key
+      ORDER BY date_key
+      ''',
+      [userId, startDate, endDate],
+    );
+
+    final hydrationMap = <String, double>{
+      for (final row in hydrationResults)
+        row['date_key'] as String: (row['total'] as num?)?.toDouble() ?? 0.0,
+    };
+
+    final nutritionMap = <String, double>{
+      for (final row in nutritionResults)
+        row['date_key'] as String: (row['total'] as num?)?.toDouble() ?? 0.0,
+    };
+
+    return dates.map((date) {
+      final key = _dateKey(date);
+
+      return <String, dynamic>{
+        'date': key,
+        'hydration': hydrationMap[key] ?? 0.0,
+        'calories': nutritionMap[key] ?? 0.0,
+      };
+    }).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> getWeeklyData(int userId) {
+    return _getChartData(userId: userId, days: 7);
+  }
+
+  Future<List<Map<String, dynamic>>> getMonthlyData(int userId) {
+    return _getChartData(userId: userId, days: 30);
+  }
+}
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\services\database_factory_native.dart
+========================================
+import 'package:path/path.dart' as p;
+import 'package:sqflite/sqflite.dart';
+
+DatabaseFactory getAppDatabaseFactory() {
+  return databaseFactory;
+}
+
+Future<String> getDatabasePath() async {
+  final directory = await getDatabasesPath();
+
+  return p.join(directory, 'hydration_nutrition_tracker.db');
+}
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\services\database_factory_web.dart
+========================================
+import 'package:sqflite_common/sqlite_api.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+
+DatabaseFactory getAppDatabaseFactory() {
+  return databaseFactoryFfiWeb;
+}
+
+Future<String> getDatabasePath() async {
+  return 'hydration_nutrition_tracker.db';
+}
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\services\database_service.dart
+========================================
+
+import 'package:sqflite_common/sqlite_api.dart';
+
+import 'database_factory_native.dart'
+    if (dart.library.js_interop) 'database_factory_web.dart'
+    as platform;
+
+class DatabaseService {
+  DatabaseService._();
+
+  static final DatabaseService instance = DatabaseService._();
+
+  Database? _database;
+
+  Future<Database> get database async {
+    if (_database != null) {
+      return _database!;
+    }
+
+    _database = await _openDatabase();
+    return _database!;
+  }
+
+  Future<Database> _openDatabase() async {
+    final factory = platform.getAppDatabaseFactory();
+
+    final options = OpenDatabaseOptions(
+      version: 2,
+      onConfigure: (db) async {
+        await db.execute('PRAGMA foreign_keys = ON');
+      },
+      onCreate: _createTables,
+      onUpgrade: _upgradeDatabase,
+    );
+
+    return factory.openDatabase(
+      await platform.getDatabasePath(),
+      options: options,
+    );
+  }
+
+  Future<void> _createTables(Database db, int version) async {
+    await db.execute('''
+      CREATE TABLE users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL COLLATE NOCASE UNIQUE,
+        password_hash TEXT NOT NULL,
+        recovery_code_hash TEXT,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE profiles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL UNIQUE,
+        age INTEGER,
+        height_cm REAL,
+        weight_kg REAL,
+        gender TEXT,
+        activity_level TEXT,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE hydration_schedules (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        time TEXT NOT NULL,
+        target_ml INTEGER NOT NULL,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE hydration_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        schedule_id INTEGER,
+        consumed_ml INTEGER NOT NULL,
+        consumed_at TEXT NOT NULL,
+        date_key TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (schedule_id)
+          REFERENCES hydration_schedules(id) ON DELETE SET NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE meal_schedules (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        start_time TEXT NOT NULL,
+        end_time TEXT NOT NULL,
+        meal_type TEXT NOT NULL,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE meal_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        schedule_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        portion_grams REAL NOT NULL DEFAULT 0,
+        calories REAL NOT NULL DEFAULT 0,
+        is_consumed INTEGER NOT NULL DEFAULT 0,
+        FOREIGN KEY (schedule_id)
+          REFERENCES meal_schedules(id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE nutrition_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        meal_item_id INTEGER,
+        food_name TEXT NOT NULL,
+        portion_grams REAL NOT NULL DEFAULT 0,
+        calories REAL NOT NULL DEFAULT 0,
+        consumed_at TEXT NOT NULL,
+        date_key TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (meal_item_id)
+          REFERENCES meal_items(id) ON DELETE SET NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE daily_summaries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        date_key TEXT NOT NULL,
+        target_water_ml INTEGER NOT NULL DEFAULT 0,
+        total_water_ml INTEGER NOT NULL DEFAULT 0,
+        target_calories REAL NOT NULL DEFAULT 0,
+        total_calories REAL NOT NULL DEFAULT 0,
+        updated_at TEXT NOT NULL,
+        UNIQUE (user_id, date_key),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute(
+      'CREATE INDEX idx_hydration_logs_user_date '
+      'ON hydration_logs(user_id, date_key)',
+    );
+
+    await db.execute(
+      'CREATE INDEX idx_nutrition_logs_user_date '
+      'ON nutrition_logs(user_id, date_key)',
+    );
+
+    await db.execute(
+      'CREATE INDEX idx_meal_schedules_user ON meal_schedules(user_id)',
+    );
+  }
+
+  Future<void> _upgradeDatabase(
+    Database db,
+    int oldVersion,
+    int newVersion,
+  ) async {
+    if (oldVersion < 2) {
+      await db.execute(
+        'ALTER TABLE users ADD COLUMN recovery_code_hash TEXT',
+      );
+    }
+  }
+
+  Future<int> insert(String table, Map<String, Object?> values) async {
+    final db = await database;
+    return db.insert(table, values);
+  }
+
+  Future<List<Map<String, Object?>>> query(
+    String table, {
+    String? where,
+    List<Object?>? whereArgs,
+    String? orderBy,
+  }) async {
+    final db = await database;
+
+    return db.query(
+      table,
+      where: where,
+      whereArgs: whereArgs,
+      orderBy: orderBy,
+    );
+  }
+
+  Future<int> update(
+    String table,
+    Map<String, Object?> values, {
+    required String where,
+    required List<Object?> whereArgs,
+  }) async {
+    final db = await database;
+    return db.update(table, values, where: where, whereArgs: whereArgs);
+  }
+
+  Future<int> delete(
+    String table, {
+    required String where,
+    required List<Object?> whereArgs,
+  }) async {
+    final db = await database;
+    return db.delete(table, where: where, whereArgs: whereArgs);
+  }
+
+  Future<void> close() async {
+    final db = _database;
+    if (db == null) return;
+
+    await db.close();
+    _database = null;
+  }
+
+  Future<void> disposeForTesting() => close();
+}
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\services\hydration_service.dart
+========================================
+import 'database_service.dart';
+
+class HydrationService {
+  HydrationService._();
+
+  static final HydrationService instance = HydrationService._();
+
+  String _todayKey() {
+    final now = DateTime.now();
+    final year = now.year.toString().padLeft(4, '0');
+    final month = now.month.toString().padLeft(2, '0');
+    final day = now.day.toString().padLeft(2, '0');
+
+    return '$year-$month-$day';
+  }
+
+  Future<void> saveHydration({
+    required int userId,
+    required int amountMl,
+    required int targetMl,
+  }) async {
+    if (amountMl <= 0) {
+      throw ArgumentError('Jumlah air harus lebih dari 0 ml.');
+    }
+
+    final db = await DatabaseService.instance.database;
+    final now = DateTime.now();
+    final dateKey = _todayKey();
+
+    await db.transaction((txn) async {
+      await txn.insert('hydration_logs', {
+        'user_id': userId,
+        'schedule_id': null,
+        'consumed_ml': amountMl,
+        'consumed_at': now.toIso8601String(),
+        'date_key': dateKey,
+      });
+
+      await txn.rawInsert(
+        '''
+        INSERT INTO daily_summaries (
+          user_id,
+          date_key,
+          target_water_ml,
+          total_water_ml,
+          updated_at
+        )
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(user_id, date_key)
+        DO UPDATE SET
+          target_water_ml = excluded.target_water_ml,
+          total_water_ml = daily_summaries.total_water_ml
+                            + excluded.total_water_ml,
+          updated_at = excluded.updated_at
+        ''',
+        [userId, dateKey, targetMl, amountMl, now.toIso8601String()],
+      );
+    });
+  }
+
+  Future<Map<String, Object?>> getTodaySummary(int userId) async {
+    final db = await DatabaseService.instance.database;
+
+    final results = await db.query(
+      'daily_summaries',
+      where: 'user_id = ? AND date_key = ?',
+      whereArgs: [userId, _todayKey()],
+      limit: 1,
+    );
+
+    if (results.isEmpty) {
+      return {'target_water_ml': 0, 'total_water_ml': 0};
+    }
+
+    return results.first;
+  }
+}
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\services\notification_services.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\services\nutrition_service.dart
+========================================
+import 'database_service.dart';
+
+class NutritionService {
+  NutritionService._();
+
+  static final NutritionService instance = NutritionService._();
+
+  String _todayKey() {
+    final now = DateTime.now();
+    return '${now.year.toString().padLeft(4, '0')}-'
+        '${now.month.toString().padLeft(2, '0')}-'
+        '${now.day.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> saveFood({
+    required int userId,
+    required String foodName,
+    required double portionGrams,
+    required double calories,
+    required String mealType,
+  }) async {
+    if (foodName.trim().isEmpty || portionGrams <= 0 || calories < 0) {
+      throw ArgumentError('Data makanan tidak valid.');
+    }
+
+    final db = await DatabaseService.instance.database;
+    final now = DateTime.now();
+    final dateKey = _todayKey();
+
+    await db.transaction((txn) async {
+      final schedules = await txn.query(
+        'meal_schedules',
+        where: 'user_id = ? AND meal_type = ? AND is_active = 1',
+        whereArgs: [userId, mealType],
+        limit: 1,
+      );
+
+      int scheduleId;
+
+      if (schedules.isNotEmpty) {
+        scheduleId = schedules.first['id'] as int;
+      } else {
+        scheduleId = await txn.insert('meal_schedules', {
+          'user_id': userId,
+          'title': mealType,
+          'start_time': '00:00',
+          'end_time': '23:59',
+          'meal_type': mealType,
+          'is_active': 1,
+          'created_at': now.toIso8601String(),
+        });
+      }
+
+      final mealItemId = await txn.insert('meal_items', {
+        'schedule_id': scheduleId,
+        'name': foodName.trim(),
+        'portion_grams': portionGrams,
+        'calories': calories,
+        'is_consumed': 1,
+      });
+
+      await txn.insert('nutrition_logs', {
+        'user_id': userId,
+        'meal_item_id': mealItemId,
+        'food_name': foodName.trim(),
+        'portion_grams': portionGrams,
+        'calories': calories,
+        'consumed_at': now.toIso8601String(),
+        'date_key': dateKey,
+      });
+
+      await txn.rawInsert(
+        '''
+        INSERT INTO daily_summaries (
+          user_id, date_key, target_calories,
+          total_calories, updated_at
+        )
+        VALUES (?, ?, 0, ?, ?)
+        ON CONFLICT(user_id, date_key)
+        DO UPDATE SET
+          total_calories =
+            daily_summaries.total_calories + excluded.total_calories,
+          updated_at = excluded.updated_at
+        ''',
+        [userId, dateKey, calories, now.toIso8601String()],
+      );
+    });
+  }
+
+  Future<List<Map<String, Object?>>> getTodayFoods(int userId) async {
+    final db = await DatabaseService.instance.database;
+
+    return db.rawQuery(
+      '''
+      SELECT nutrition_logs.*, meal_schedules.meal_type
+      FROM nutrition_logs
+      LEFT JOIN meal_items
+        ON nutrition_logs.meal_item_id = meal_items.id
+      LEFT JOIN meal_schedules
+        ON meal_items.schedule_id = meal_schedules.id
+      WHERE nutrition_logs.user_id = ?
+        AND nutrition_logs.date_key = ?
+      ORDER BY nutrition_logs.consumed_at DESC
+      ''',
+      [userId, _todayKey()],
+    );
+  }
+
+  Future<double> getTodayCalories(int userId) async {
+    final db = await DatabaseService.instance.database;
+
+    final result = await db.query(
+      'daily_summaries',
+      columns: ['total_calories'],
+      where: 'user_id = ? AND date_key = ?',
+      whereArgs: [userId, _todayKey()],
+      limit: 1,
+    );
+
+    if (result.isEmpty) return 0;
+
+    return (result.first['total_calories'] as num?)?.toDouble() ?? 0;
+  }
+}
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\services\password_hasher.dart
+========================================
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:cryptography/cryptography.dart';
+
+class PasswordHasher {
+  static final Pbkdf2 _algorithm = Pbkdf2(
+    macAlgorithm: Hmac.sha256(),
+    iterations: 100000,
+    bits: 256,
+  );
+
+  static Future<String> hash(String password) async {
+    final random = Random.secure();
+    final salt = List<int>.generate(16, (_) => random.nextInt(256));
+
+    final key = await _algorithm.deriveKey(
+      secretKey: SecretKey(utf8.encode(password)),
+      nonce: salt,
+    );
+
+    final hashBytes = await key.extractBytes();
+
+    return '${base64Encode(salt)}:${base64Encode(hashBytes)}';
+  }
+
+  static Future<bool> verify(String password, String storedHash) async {
+    try {
+      final parts = storedHash.split(':');
+      if (parts.length != 2) return false;
+
+      final salt = base64Decode(parts[0]);
+      final expectedHash = base64Decode(parts[1]);
+
+      if (salt.length != 16 || expectedHash.length != 32) {
+        return false;
+      }
+
+      final key = await _algorithm.deriveKey(
+        secretKey: SecretKey(utf8.encode(password)),
+        nonce: salt,
+      );
+
+      final actualHash = await key.extractBytes();
+
+      return constantTimeEquals(actualHash, expectedHash);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static String generateRecoveryCode() {
+    final random = Random.secure();
+    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+
+    final code = bytes
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join()
+        .toUpperCase();
+
+    return 'HYDR-$code';
+  }
+
+  static bool constantTimeEquals(List<int> a, List<int> b) {
+    if (a.length != b.length) return false;
+
+    var difference = 0;
+
+    for (var i = 0; i < a.length; i++) {
+      difference |= a[i] ^ b[i];
+    }
+
+    return difference == 0;
+  }
+}
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\services\session_services.dart
+========================================
+import 'package:shared_preferences/shared_preferences.dart';
+
+class SessionService {
+  static const String _userIdKey = 'current_user_id';
+
+  Future<void> saveSession(int userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_userIdKey, userId);
+  }
+
+  Future<int?> getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_userIdKey);
+  }
+
+  Future<void> clearSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_userIdKey);
+  }
+}
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\utils\app_constants.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\utils\responsive_helper.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\utils\validator.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\widgets\app_back_button.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\widgets\app_bottom_navigation.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\widgets\error_widget.dart
+========================================
+
+
+========================================
+FILE: D:\semester_5\pbp\Pelacak-Hidrasi-dan-Nutrisi\lib\widgets\loading_widget.dart
+========================================
+
