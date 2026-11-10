@@ -1,9 +1,8 @@
+ <div align="center">
 
-<div align="center">
+<img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/flutter/flutter-original.svg" width="110" alt="Flutter Logo">
 
-<img src="https://api.iconify.design/logos:flutter.svg" width="100" alt="Flutter Logo">
-
-# HYDRATION & NUTRITION TRACKER
+# 💧 HYDRATION & NUTRITION TRACKER
 
 ### Your Health, Your Habit, Your Better Life.
 
@@ -11,9 +10,9 @@
 
 <br>
 
-<img src="https://img.shields.io/badge/Flutter-Mobile%20Application-02569B?style=for-the-badge&logo=flutter&logoColor=white">
-<img src="https://img.shields.io/badge/Dart-Programming%20Language-0175C2?style=for-the-badge&logo=dart&logoColor=white">
-<img src="https://img.shields.io/badge/Status-Development-16A34A?style=for-the-badge">
+<img src="https://img.shields.io/badge/Flutter-Mobile%20Application-02569B?style=for-the-badge&logo=flutter&logoColor=white" />
+<img src="https://img.shields.io/badge/Dart-Programming%20Language-0175C2?style=for-the-badge&logo=dart&logoColor=white" />
+<img src="https://img.shields.io/badge/Status-Development-orange?style=for-the-badge" />
 
 </div>
 
@@ -29,18 +28,13 @@ Melalui aplikasi ini, pengguna dapat mencatat konsumsi air, memantau asupan maka
 
 Dengan pendekatan yang sederhana dan informatif, aplikasi ini diharapkan dapat menjadi teman digital dalam perjalanan menuju gaya hidup yang lebih sehat.
 
----
-
 ## ✨ Main Features
 
 <table>
 <tr>
-<td width="50%" valign="top">
+<td width="50%">
 
-<h3>
-<img src="https://api.iconify.design/solar:waterdrops-bold-duotone.svg?color=%230EA5E9" width="30" align="center">
- Water Tracking
-</h3>
+### 💧 Water Tracking
 
 Pantau kebutuhan hidrasi tubuh dengan lebih mudah.
 
@@ -50,12 +44,9 @@ Pantau kebutuhan hidrasi tubuh dengan lebih mudah.
 - Progres pencapaian hidrasi.
 
 </td>
-<td width="50%" valign="top">
+<td width="50%">
 
-<h3>
-<img src="https://api.iconify.design/solar:salad-bold-duotone.svg?color=%2316A34A" width="30" align="center">
- Nutrition Tracking
-</h3>
+### 🥗 Nutrition Tracking
 
 Kenali dan kelola asupan nutrisi harian.
 
@@ -66,14 +57,10 @@ Kenali dan kelola asupan nutrisi harian.
 
 </td>
 </tr>
-
 <tr>
-<td width="50%" valign="top">
+<td width="50%">
 
-<h3>
-<img src="https://api.iconify.design/solar:health-bold-duotone.svg?color=%230D9488" width="30" align="center">
- Health Dashboard
-</h3>
+### 📊 Health Dashboard
 
 Semua informasi penting dalam satu tampilan.
 
@@ -83,12 +70,9 @@ Semua informasi penting dalam satu tampilan.
 - Informasi konsumsi harian.
 
 </td>
-<td width="50%" valign="top">
+<td width="50%">
 
-<h3>
-<img src="https://api.iconify.design/solar:target-bold-duotone.svg?color=%230EA5E9" width="30" align="center">
- Daily Goals
-</h3>
+### 🎯 Daily Goals
 
 Bangun kebiasaan sehat melalui target harian.
 
@@ -99,14 +83,10 @@ Bangun kebiasaan sehat melalui target harian.
 
 </td>
 </tr>
-
 <tr>
-<td colspan="2" valign="top">
+<td colspan="2">
 
-<h3>
-<img src="https://api.iconify.design/solar:calendar-bold-duotone.svg?color=%2316A34A" width="30" align="center">
- Consumption History
-</h3>
+### 📅 Consumption History
 
 Pantau perjalanan kebiasaan sehat melalui riwayat konsumsi air dan makanan yang tercatat dari waktu ke waktu.
 
@@ -122,80 +102,15 @@ Kami percaya bahwa hidup sehat tidak harus dimulai dengan perubahan besar. Kebia
 
 Melalui aplikasi ini, pengguna mendapatkan:
 
-<table>
-<tr>
-<td width="45">
-<img src="https://api.iconify.design/solar:widget-5-bold-duotone.svg?color=%230EA5E9" width="35">
-</td>
-<td>
-
-**Simplicity**
-
-Pemantauan hidrasi dan nutrisi dalam satu aplikasi.
-
-</td>
-</tr>
-
-<tr>
-<td>
-<img src="https://api.iconify.design/solar:eye-bold-duotone.svg?color=%230D9488" width="35">
-</td>
-<td>
-
-**Awareness**
-
-Meningkatkan kesadaran terhadap kebutuhan tubuh.
-
-</td>
-</tr>
-
-<tr>
-<td>
-<img src="https://api.iconify.design/solar:check-circle-bold-duotone.svg?color=%2316A34A" width="35">
-</td>
-<td>
-
-**Consistency**
-
-Membantu membangun kebiasaan sehat secara rutin.
-
-</td>
-</tr>
-
-<tr>
-<td>
-<img src="https://api.iconify.design/solar:chart-2-bold-duotone.svg?color=%230EA5E9" width="35">
-</td>
-<td>
-
-**Monitoring**
-
-Memudahkan pemantauan perkembangan konsumsi.
-
-</td>
-</tr>
-
-<tr>
-<td>
-<img src="https://api.iconify.design/solar:heart-bold-duotone.svg?color=%2316A34A" width="35">
-</td>
-<td>
-
-**Better Lifestyle**
-
-Mendukung penerapan pola hidup yang lebih sehat.
-
-</td>
-</tr>
-</table>
-
----
+- **Simplicity** — Pemantauan hidrasi dan nutrisi dalam satu aplikasi.
+- **Awareness** — Meningkatkan kesadaran terhadap kebutuhan tubuh.
+- **Consistency** — Membantu membangun kebiasaan sehat secara rutin.
+- **Monitoring** — Memudahkan pemantauan perkembangan konsumsi.
+- **Better Lifestyle** — Mendukung penerapan pola hidup yang lebih sehat.
 
 ## 🎯 Our Mission
 
 Menghadirkan solusi digital yang membantu masyarakat lebih peduli terhadap kesehatan melalui pemantauan hidrasi dan nutrisi secara praktis, terukur, dan berkelanjutan.
-
----
 
 ## 👨‍💻 Development Team
 
@@ -203,28 +118,9 @@ Aplikasi **Hydration & Nutrition Tracker** dikembangkan oleh:
 
 <div align="center">
 
-<table>
-<tr>
-<td align="center" width="50%">
-
-<img src="https://api.iconify.design/solar:user-circle-bold-duotone.svg?color=%230EA5E9" width="65">
-
-### Rahmat Ismail
-
-**Developer**
-
-</td>
-<td align="center" width="50%">
-
-<img src="https://api.iconify.design/solar:user-circle-bold-duotone.svg?color=%2316A34A" width="65">
-
-### Ganeza Pratama
-
-**Developer**
-
-</td>
-</tr>
-</table>
+| 👨‍💻 Rahmat Ismail | 👨‍💻 Ganeza Pratama |
+|:---:|:---:|
+| Developer | Developer |
 
 *Developed with dedication and creativity.*
 
@@ -234,15 +130,11 @@ Aplikasi **Hydration & Nutrition Tracker** dikembangkan oleh:
 
 <div align="center">
 
-<img src="https://api.iconify.design/solar:waterdrops-bold-duotone.svg?color=%230EA5E9" width="55">
-
-## DRINK WELL. EAT WELL. LIVE WELL.
+### 💧 DRINK WELL. EAT WELL. LIVE WELL.
 
 *Small Healthy Habits, Big Changes.*
 
-**Powered by Flutter**
-
-<img src="https://img.shields.io/badge/Made%20with-❤️-red?style=flat-square">
+**Powered by Flutter ❤️**
 
 © 2026 Hydration & Nutrition Tracker
 
