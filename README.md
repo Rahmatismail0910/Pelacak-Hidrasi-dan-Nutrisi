@@ -1,5 +1,6 @@
+ <div align="center">
 
-<div align="center">
+<img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/flutter/flutter-original.svg" width="110" alt="Flutter Logo">
 
 # 💧 HYDRATION & NUTRITION TRACKER
 
@@ -117,24 +118,9 @@ Aplikasi **Hydration & Nutrition Tracker** dikembangkan oleh:
 
 <div align="center">
 
-<table>
-<tr>
-<td align="center" width="50%">
-
-### 👨‍💻 Rahmat Ismail
-
-**Developer**
-
-</td>
-<td align="center" width="50%">
-
-### 👨‍💻 Ganeza Pratama
-
-**Developer**
-
-</td>
-</tr>
-</table>
+| 👨‍💻 Rahmat Ismail | 👨‍💻 Ganeza Pratama |
+|:---:|:---:|
+| Developer | Developer |
 
 *Developed with dedication and creativity.*
 
@@ -148,7 +134,7 @@ Aplikasi **Hydration & Nutrition Tracker** dikembangkan oleh:
 
 *Small Healthy Habits, Big Changes.*
 
-**Built with Flutter ❤️**
+**Powered by Flutter ❤️**
 
 © 2026 Hydration & Nutrition Tracker
 
