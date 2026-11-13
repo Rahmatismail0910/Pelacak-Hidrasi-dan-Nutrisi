@@ -9,6 +9,7 @@ import 'login_screen.dart';
 import 'hydration_screen.dart';
 import 'nutrition_screen.dart';
 import 'dashboard_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -161,6 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.logout),
           ),
         ],
+        
       ),
       body: SafeArea(
         child: RefreshIndicator(
@@ -356,12 +358,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // 5. Menu Profil.
                 // Belum dihubungkan karena dikerjakan teman.
+                // 5. Menu Profil.
                 _buildMenuCard(
                   icon: Icons.person,
                   title: 'Profil',
                   subtitle: 'Lihat dan kelola informasi akun pengguna.',
                   color: Colors.teal,
-                  onTap: () => _showComingSoon('Profil'),
+                  onTap: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProfileScreen(),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
