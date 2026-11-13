@@ -141,15 +141,16 @@ class _HomeScreenState extends State<HomeScreen> {
       (route) => false,
     );
   }
+
   // Menampilkan pemberitahuan untuk fitur yang belum tersedia.
-void _showComingSoon(String feature) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text('Fitur $feature belum tersedia.'),
-      behavior: SnackBarBehavior.floating,
-    ),
-  );
-}
+  void _showComingSoon(String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Fitur $feature belum tersedia.'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

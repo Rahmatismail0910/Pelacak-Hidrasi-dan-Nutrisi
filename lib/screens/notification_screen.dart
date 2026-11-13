@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../models/schedule_model.dart';
@@ -27,8 +26,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     try {
       await NotificationServices.instance.initialize();
 
-      final settings =
-          await NotificationServices.instance.loadSettings();
+      final settings = await NotificationServices.instance.loadSettings();
 
       if (!mounted) return;
 
@@ -69,18 +67,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
     if (selectedTime == null) return;
 
-    final minutes =
-        selectedTime.hour * 60 + selectedTime.minute;
+    final minutes = selectedTime.hour * 60 + selectedTime.minute;
 
     onChanged(minutes);
   }
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-      ),
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
   }
 
@@ -88,8 +82,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     if (_isSaving) return;
 
     if (_settings.waterEnabled &&
-        _settings.waterStartMinutes >=
-            _settings.waterEndMinutes) {
+        _settings.waterStartMinutes >= _settings.waterEndMinutes) {
       _showMessage(
         'Jam mulai pengingat minum harus lebih awal dari jam selesai.',
       );
@@ -101,8 +94,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
     });
 
     try {
-      final success =
-          await NotificationServices.instance.saveSettings(_settings);
+      final success = await NotificationServices.instance.saveSettings(
+        _settings,
+      );
 
       if (!mounted) return;
 
@@ -186,9 +180,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(title: const Text('Pengaturan Notifikasi')),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -255,9 +247,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     value: _settings.waterEnabled,
                     onChanged: (value) {
                       setState(() {
-                        _settings = _settings.copyWith(
-                          waterEnabled: value,
-                        );
+                        _settings = _settings.copyWith(waterEnabled: value);
                       });
                     },
                   ),
@@ -267,8 +257,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       title: 'Mulai pengingat',
                       minutes: _settings.waterStartMinutes,
                       onTap: () => _selectTime(
-                        currentMinutes:
-                            _settings.waterStartMinutes,
+                        currentMinutes: _settings.waterStartMinutes,
                         onChanged: (value) {
                           setState(() {
                             _settings = _settings.copyWith(
@@ -300,22 +289,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         border: OutlineInputBorder(),
                       ),
                       items: const [
-                        DropdownMenuItem(
-                          value: 30,
-                          child: Text('30 menit'),
-                        ),
-                        DropdownMenuItem(
-                          value: 60,
-                          child: Text('60 menit'),
-                        ),
-                        DropdownMenuItem(
-                          value: 90,
-                          child: Text('90 menit'),
-                        ),
-                        DropdownMenuItem(
-                          value: 120,
-                          child: Text('120 menit'),
-                        ),
+                        DropdownMenuItem(value: 30, child: Text('30 menit')),
+                        DropdownMenuItem(value: 60, child: Text('60 menit')),
+                        DropdownMenuItem(value: 90, child: Text('90 menit')),
+                        DropdownMenuItem(value: 120, child: Text('120 menit')),
                       ],
                       onChanged: (value) {
                         if (value == null) return;
@@ -344,9 +321,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     value: _settings.breakfastEnabled,
                     onChanged: (value) {
                       setState(() {
-                        _settings = _settings.copyWith(
-                          breakfastEnabled: value,
-                        );
+                        _settings = _settings.copyWith(breakfastEnabled: value);
                       });
                     },
                   ),
@@ -355,8 +330,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       title: 'Waktu sarapan',
                       minutes: _settings.breakfastMinutes,
                       onTap: () => _selectTime(
-                        currentMinutes:
-                            _settings.breakfastMinutes,
+                        currentMinutes: _settings.breakfastMinutes,
                         onChanged: (value) {
                           setState(() {
                             _settings = _settings.copyWith(
@@ -373,9 +347,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     value: _settings.lunchEnabled,
                     onChanged: (value) {
                       setState(() {
-                        _settings = _settings.copyWith(
-                          lunchEnabled: value,
-                        );
+                        _settings = _settings.copyWith(lunchEnabled: value);
                       });
                     },
                   ),
@@ -387,9 +359,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         currentMinutes: _settings.lunchMinutes,
                         onChanged: (value) {
                           setState(() {
-                            _settings = _settings.copyWith(
-                              lunchMinutes: value,
-                            );
+                            _settings = _settings.copyWith(lunchMinutes: value);
                           });
                         },
                       ),
@@ -401,9 +371,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     value: _settings.dinnerEnabled,
                     onChanged: (value) {
                       setState(() {
-                        _settings = _settings.copyWith(
-                          dinnerEnabled: value,
-                        );
+                        _settings = _settings.copyWith(dinnerEnabled: value);
                       });
                     },
                   ),
@@ -436,16 +404,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                        ),
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.save),
-                label: Text(
-                  _isSaving
-                      ? 'Menyimpan...'
-                      : 'Simpan Pengaturan',
-                ),
+                label: Text(_isSaving ? 'Menyimpan...' : 'Simpan Pengaturan'),
               ),
             ),
 
@@ -456,4 +418,3 @@ class _NotificationScreenState extends State<NotificationScreen> {
     );
   }
 }
-

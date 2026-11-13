@@ -1,4 +1,3 @@
-
 class ScheduleModel {
   final bool waterEnabled;
   final int waterStartMinutes;
@@ -41,15 +40,11 @@ class ScheduleModel {
   }) {
     return ScheduleModel(
       waterEnabled: waterEnabled ?? this.waterEnabled,
-      waterStartMinutes:
-          waterStartMinutes ?? this.waterStartMinutes,
+      waterStartMinutes: waterStartMinutes ?? this.waterStartMinutes,
       waterEndMinutes: waterEndMinutes ?? this.waterEndMinutes,
-      waterIntervalMinutes:
-          waterIntervalMinutes ?? this.waterIntervalMinutes,
-      breakfastEnabled:
-          breakfastEnabled ?? this.breakfastEnabled,
-      breakfastMinutes:
-          breakfastMinutes ?? this.breakfastMinutes,
+      waterIntervalMinutes: waterIntervalMinutes ?? this.waterIntervalMinutes,
+      breakfastEnabled: breakfastEnabled ?? this.breakfastEnabled,
+      breakfastMinutes: breakfastMinutes ?? this.breakfastMinutes,
       lunchEnabled: lunchEnabled ?? this.lunchEnabled,
       lunchMinutes: lunchMinutes ?? this.lunchMinutes,
       dinnerEnabled: dinnerEnabled ?? this.dinnerEnabled,
@@ -87,4 +82,3 @@ class ScheduleModel {
     );
   }
 }
-

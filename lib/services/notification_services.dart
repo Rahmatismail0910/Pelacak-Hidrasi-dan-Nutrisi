@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -26,8 +25,7 @@ class NotificationServices {
 
     tz.initializeTimeZones();
 
-    final String timeZoneName =
-        await FlutterTimezone.getLocalTimezone();
+    final String timeZoneName = await FlutterTimezone.getLocalTimezone();
 
     tz.setLocalLocation(tz.getLocation(timeZoneName));
 
@@ -46,9 +44,7 @@ class NotificationServices {
       iOS: iosSettings,
     );
 
-    await _notifications.initialize(
-      settings: initializationSettings,
-    );
+    await _notifications.initialize(settings: initializationSettings);
 
     _initialized = true;
   }
@@ -56,17 +52,20 @@ class NotificationServices {
   Future<bool> requestPermission() async {
     await initialize();
 
-    final android = _notifications.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final android = _notifications
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
 
     if (android != null) {
-      final granted =
-          await android.requestNotificationsPermission();
+      final granted = await android.requestNotificationsPermission();
       return granted ?? false;
     }
 
-    final ios = _notifications.resolvePlatformSpecificImplementation<
-        IOSFlutterLocalNotificationsPlugin>();
+    final ios = _notifications
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >();
 
     if (ios != null) {
       final granted = await ios.requestPermissions(
@@ -105,12 +104,10 @@ class NotificationServices {
 
     final preferences = await SharedPreferences.getInstance();
 
-    await preferences.setString(
-      _settingsKey,
-      jsonEncode(settings.toMap()),
-    );
+    await preferences.setString(_settingsKey, jsonEncode(settings.toMap()));
 
-    final hasEnabledReminder = settings.waterEnabled ||
+    final hasEnabledReminder =
+        settings.waterEnabled ||
         settings.breakfastEnabled ||
         settings.lunchEnabled ||
         settings.dinnerEnabled;
@@ -165,9 +162,7 @@ class NotificationServices {
     }
   }
 
-  Future<void> _scheduleWaterReminders(
-    ScheduleModel settings,
-  ) async {
+  Future<void> _scheduleWaterReminders(ScheduleModel settings) async {
     final start = settings.waterStartMinutes;
     final end = settings.waterEndMinutes;
     final interval = settings.waterIntervalMinutes;
@@ -176,9 +171,7 @@ class NotificationServices {
 
     int notificationId = 1000;
 
-    for (int minutes = start + interval;
-        minutes <= end;
-        minutes += interval) {
+    for (int minutes = start + interval; minutes <= end; minutes += interval) {
       final hour = minutes ~/ 60;
       final minute = minutes % 60;
 
@@ -261,4 +254,3 @@ class NotificationServices {
     await _notifications.cancelAll();
   }
 }
-
