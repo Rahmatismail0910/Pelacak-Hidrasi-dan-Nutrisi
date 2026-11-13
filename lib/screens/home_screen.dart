@@ -9,6 +9,7 @@ import 'login_screen.dart';
 import 'hydration_screen.dart';
 import 'nutrition_screen.dart';
 import 'dashboard_screen.dart';
+import 'notification_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -92,17 +93,16 @@ class _HomeScreenState extends State<HomeScreen> {
     await _refreshSummary();
   }
 
-  // Menu yang belum dikerjakan.
-  // Halaman Notifikasi dan Profil belum dihubungkan.
-  void _showComingSoon(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Fitur $feature belum tersedia.'),
-        duration: const Duration(seconds: 2),
-      ),
+  // Navigasi ke halaman Notifikasi.
+  Future<void> _openNotification() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const NotificationScreen()),
     );
   }
 
+  // Menu yang belum dikerjakan.
+  // Halaman Notifikasi dan Profil belum dihubungkan.
   // Fungsi logout.
   Future<void> _logout(BuildContext context) async {
     final confirmed = await showDialog<bool>(
@@ -141,6 +141,15 @@ class _HomeScreenState extends State<HomeScreen> {
       (route) => false,
     );
   }
+  // Menampilkan pemberitahuan untuk fitur yang belum tersedia.
+void _showComingSoon(String feature) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('Fitur $feature belum tersedia.'),
+      behavior: SnackBarBehavior.floating,
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -351,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: 'Notifikasi',
                   subtitle: 'Lihat pengingat jadwal minum dan aktivitas.',
                   color: Colors.orange,
-                  onTap: () => _showComingSoon('Notifikasi'),
+                  onTap: () => _openNotification(),
                 ),
 
                 // 5. Menu Profil.
