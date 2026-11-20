@@ -15,6 +15,8 @@ class AuthProvider extends ChangeNotifier {
 
   UserModel? _currentUser;
   bool _isLoading = false;
+  bool _isInitializing = true;
+  bool get isInitializing => _isInitializing;
   String? _errorMessage;
   String? _recoveryCode;
 
@@ -122,8 +124,6 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> restoreSession() async {
-    _setLoading(true);
-
     try {
       final userId = await _sessionService.getUserId();
 
@@ -139,8 +139,10 @@ class AuthProvider extends ChangeNotifier {
       }
     } catch (e) {
       _errorMessage = _readableError(e);
+      _currentUser = null;
     } finally {
-      _setLoading(false);
+      _isInitializing = false;
+      notifyListeners();
     }
   }
 

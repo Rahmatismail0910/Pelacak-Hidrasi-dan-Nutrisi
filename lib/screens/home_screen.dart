@@ -5,7 +5,6 @@ import '../providers/auth_provider.dart';
 import '../services/hydration_service.dart';
 import '../services/nutrition_service.dart';
 
-import 'login_screen.dart';
 import 'hydration_screen.dart';
 import 'nutrition_screen.dart';
 import 'dashboard_screen.dart';
@@ -139,14 +138,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (confirmed != true || !context.mounted) return;
 
     await context.read<AuthProvider>().logout();
-
-    if (!context.mounted) return;
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (route) => false,
-    );
   }
 
   @override
