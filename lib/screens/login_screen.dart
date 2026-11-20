@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
-import 'home_screen.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
 
@@ -49,12 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _isLoading = false;
       });
 
-      if (success) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-        );
-      } else {
+      if (!success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -64,6 +58,9 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         );
       }
+
+      // Jika berhasil, AuthProvider memperbarui currentUser.
+      // Consumer di main.dart otomatis menampilkan HomeScreen.
     } catch (e) {
       if (!mounted) return;
 

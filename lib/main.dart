@@ -3,12 +3,14 @@ import 'package:provider/provider.dart';
 
 import 'providers/auth_provider.dart';
 import 'screens/login_screen.dart';
+import 'screens/home_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
   runApp(
     ChangeNotifierProvider(
-      create: (_) => AuthProvider(),
+      create: (_) => AuthProvider()..restoreSession(),
       child: const HydrationNutritionApp(),
     ),
   );
@@ -27,7 +29,21 @@ class HydrationNutritionApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         inputDecorationTheme: const InputDecorationTheme(filled: true),
       ),
-      home: const LoginScreen(),
+      home: Consumer<AuthProvider>(
+        builder: (context, auth, child) {
+          if (auth.isInitializing) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          if (auth.isLoggedIn) {
+            return const HomeScreen();
+          }
+
+          return const LoginScreen();
+        },
+      ),
     );
   }
 }
