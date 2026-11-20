@@ -9,10 +9,6 @@ import 'login_screen.dart';
 import 'hydration_screen.dart';
 import 'nutrition_screen.dart';
 import 'dashboard_screen.dart';
-<<<<<<< Updated upstream
-=======
-import 'profile_screen.dart';
->>>>>>> Stashed changes
 import 'notification_screen.dart';
 import 'profile_screen.dart';
 
