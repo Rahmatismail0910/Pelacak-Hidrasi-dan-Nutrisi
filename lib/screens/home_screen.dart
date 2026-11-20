@@ -14,6 +14,7 @@ import 'dashboard_screen.dart';
 import 'profile_screen.dart';
 >>>>>>> Stashed changes
 import 'notification_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -105,8 +106,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Menu yang belum dikerjakan.
-  // Halaman Notifikasi dan Profil belum dihubungkan.
+  // Navigasi ke halaman Profil.
+  Future<void> _openProfile() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ProfileScreen()),
+    );
+  }
+
   // Fungsi logout.
   Future<void> _logout(BuildContext context) async {
     final confirmed = await showDialog<bool>(
@@ -143,16 +150,6 @@ class _HomeScreenState extends State<HomeScreen> {
       context,
       MaterialPageRoute(builder: (_) => const LoginScreen()),
       (route) => false,
-    );
-  }
-
-  // Menampilkan pemberitahuan untuk fitur yang belum tersedia.
-  void _showComingSoon(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Fitur $feature belum tersedia.'),
-        behavior: SnackBarBehavior.floating,
-      ),
     );
   }
 
@@ -359,23 +356,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
 
                 // 4. Menu Notifikasi.
-                // Belum dihubungkan karena dikerjakan teman.
                 _buildMenuCard(
                   icon: Icons.notifications,
                   title: 'Notifikasi',
                   subtitle: 'Lihat pengingat jadwal minum dan aktivitas.',
                   color: Colors.orange,
-                  onTap: () => _openNotification(),
+                  onTap: _openNotification,
                 ),
 
                 // 5. Menu Profil.
-                // Belum dihubungkan karena dikerjakan teman.
                 _buildMenuCard(
                   icon: Icons.person,
                   title: 'Profil',
                   subtitle: 'Lihat dan kelola informasi akun pengguna.',
                   color: Colors.teal,
-                  onTap: () => _showComingSoon('Profil'),
+                  onTap: _openProfile,
                 ),
               ],
             ),
